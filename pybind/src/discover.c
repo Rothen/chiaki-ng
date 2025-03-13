@@ -1,25 +1,42 @@
 // SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <windows.h>
+    #pragma comment(lib, "ws2_32.lib") // Link Winsock automatically
+#else
+    #include <netdb.h>
+    #include <netinet/in.h>
+#endif
 #include <chiaki-pybind.h>
-
 #include <chiaki/discovery.h>
-
-#include <netdb.h>
 #include <stdio.h>
 #include <string.h>
-#include <netinet/in.h>
 
-/*static struct argp_option options[] = {
-    {"host", ARG_KEY_HOST, "Host", 0, "Host to send discovery request to", 0},
-    {"timeout", ARG_KEY_TIMEOUT, "Timeout", 0, "Number of seconds to wait for request to return (default=2)", 0},
-    {0}};
-*/
+int initialize_winsock()
+{
+    int result = 0;
+#ifdef _WIN32
+    WSADATA wsaData;
+    result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+    return result;
+}
+
+void cleanup_winsock()
+{
+#ifdef _WIN32
+    WSACleanup();
+#endif
+}
 
 static void discovery_cb(ChiakiDiscoveryHost *host, void *user)
 {
-	ChiakiLog *log = user;
+    initialize_winsock ();
+    ChiakiLog *log = user;
 
-	CHIAKI_LOGI(log, "--");
+    CHIAKI_LOGI(log, "--");
 	CHIAKI_LOGI(log, "Discovered Host:");
 	CHIAKI_LOGI(log, "State:                             %s", chiaki_discovery_host_state_string(host->state));
 
@@ -64,12 +81,18 @@ CHIAKI_EXPORT int chiaki_pybind_discover(ChiakiLog *log, const char *host, const
         timeout_sec = atof(timeout);
     }
 
-	struct addrinfo *host_addrinfos;
+#ifdef _WIN32
+    initialize_winsock(); // Ensure Winsock is started
+#endif
+
+    struct addrinfo *host_addrinfos;
 	// make hostname use ipv4 for now
 	struct addrinfo hints;
 	memset(&hints, 0, sizeof(hints));
-	hints.ai_socktype = SOCK_DGRAM;
-	char *ipv6 = strchr(host, ':');
+    hints.ai_socktype = SOCK_DGRAM;
+    hints.ai_protocol = IPPROTO_UDP; // ✅ Force UDP
+    hints.ai_family = AF_UNSPEC;     // ✅ Allow both IPv4 and IPv6
+    char *ipv6 = strchr(host, ':');
 	if(ipv6)
 		hints.ai_family = AF_INET6;
 	else

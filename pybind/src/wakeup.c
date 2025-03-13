@@ -5,6 +5,7 @@
 #include <chiaki/discovery.h>
 
 #include <string.h>
+#include <stdio.h>
 
 /*static struct argp_option options[] = {
 	{ "host", ARG_KEY_HOST, "Host", 0, "Host to send wakeup packet to", 0 },

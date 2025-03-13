@@ -9,16 +9,52 @@
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 #include <pybind11/pybind11.h>
 #include <pybind11/numpy.h>
-#include <pybind11/eigen.h>
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
 #include <pybind11/functional.h>
 
 namespace py = pybind11;
 
-int chiaki_pybind_discover_wrapper(ChiakiLog *log, const std::string &host, const std::string &timeout)
+// Python wrapper for ChiakiLogCb callback
+void log_callback_proxy(ChiakiLogLevel level, const char *msg, void *user)
 {
-    return chiaki_pybind_discover(log, host.c_str(), timeout.c_str());
+    if (user)
+    {
+        auto *callback = static_cast<std::function<void(int, std::string)> *>(user);
+        (*callback)(static_cast<int>(level), std::string(msg)); // Call Python callback
+    }
+}
+
+// Wrapper class for ChiakiLog
+class PyChiakiLog
+{
+public:
+    uint32_t level_mask;
+    std::function<void(int, std::string)> log_callback;
+    ChiakiLog chiaki_log;
+
+    PyChiakiLog(uint32_t level_mask = 0xFFFFFFFF) : level_mask(level_mask)
+    {
+        chiaki_log.level_mask = level_mask;
+        chiaki_log.cb = log_callback_proxy;
+        chiaki_log.user = &log_callback; // Store reference to callback
+    }
+
+    void set_callback(std::function<void(int, std::string)> cb)
+    {
+        log_callback = std::move(cb);
+        chiaki_log.user = &log_callback;
+    }
+
+    ChiakiLog *get_raw_log()
+    {
+        return &chiaki_log;
+    }
+};
+
+int chiaki_pybind_discover_wrapper(PyChiakiLog &log, const std::string &host, const std::string &timeout)
+{
+    return chiaki_pybind_discover(log.get_raw_log(), host.c_str(), timeout.c_str());
 }
 
 int chiaki_pybind_wakeup_wrapper(ChiakiLog *log, const std::string &host, const std::string &registkey, bool ps5)
@@ -26,7 +62,7 @@ int chiaki_pybind_wakeup_wrapper(ChiakiLog *log, const std::string &host, const 
     return chiaki_pybind_wakeup(log, host.c_str(), registkey.c_str(), ps5);
 }
 
-PYBIND11_MODULE(chiaki, m)
+PYBIND11_MODULE(chiaki_py, m)
 {
     m.doc() = "Python bindings for Chiaki CLI commands";
 
@@ -56,13 +92,26 @@ PYBIND11_MODULE(chiaki, m)
         .export_values();
 
     py::enum_<ChiakiTarget>(m, "ChiakiTarget")
-        .value("CHIAKI_TARGET_PS4_UNKNOWN", CHIAKI_TARGET_PS4_UNKNOWN)
-        .value("CHIAKI_TARGET_PS4_8", CHIAKI_TARGET_PS4_8)
-        .value("CHIAKI_TARGET_PS4_9", CHIAKI_TARGET_PS4_9)
-        .value("CHIAKI_TARGET_PS4_10", CHIAKI_TARGET_PS4_10)
-        .value("CHIAKI_TARGET_PS5_UNKNOWN", CHIAKI_TARGET_PS5_UNKNOWN)
-        .value("CHIAKI_TARGET_PS5_1", CHIAKI_TARGET_PS5_1)
+        .value("PS4_UNKNOWN", CHIAKI_TARGET_PS4_UNKNOWN)
+        .value("PS4_8", CHIAKI_TARGET_PS4_8)
+        .value("PS4_9", CHIAKI_TARGET_PS4_9)
+        .value("PS4_10", CHIAKI_TARGET_PS4_10)
+        .value("PS5_UNKNOWN", CHIAKI_TARGET_PS5_UNKNOWN)
+        .value("PS5_1", CHIAKI_TARGET_PS5_1)
         .export_values();
+
+    py::enum_<ChiakiLogLevel>(m, "ChiakiLogLevel")
+        .value("DEBUG", CHIAKI_LOG_DEBUG)
+        .value("VERBOSE", CHIAKI_LOG_VERBOSE)
+        .value("INFO", CHIAKI_LOG_INFO)
+        .value("WARNING", CHIAKI_LOG_WARNING)
+        .value("ERROR", CHIAKI_LOG_ERROR)
+        .export_values();
+
+    // Expose ChiakiLog class
+    py::class_<PyChiakiLog>(m, "ChiakiLog")
+        .def(py::init<uint32_t>(), py::arg("level_mask") = 0xFFFFFFFF)
+        .def("set_callback", &PyChiakiLog::set_callback, "Set the logging callback function.");
 
     m.def("discover", &chiaki_pybind_discover_wrapper,
           py::arg("log"),

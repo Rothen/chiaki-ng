@@ -39,3 +39,9 @@ chiaki.conf
 .cache/
 *.vscode
 site/
+Qt/
+deps/
+libplacebo/
+chiaki-ng-Win/
+chiaki-ng-Win-debug/
+vcpkg_installed/
