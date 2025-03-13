@@ -1,20 +1,10 @@
-import chiaki_py
-import time
+from chiaki_py import ChiakiLog, discover, ChiakiLogLevel
 
+log = ChiakiLog(level=ChiakiLogLevel.INFO)
 
-
-
-# Create a ChiakiLog instance
-log = chiaki_py.ChiakiLog()
-
-# Set a Python function as the log callback
-
-
-def my_log_callback(level, message):
+def my_log_callback(level: int, message: str):
     print(f"[{level}] {message}")
-
 
 log.set_callback(my_log_callback)
 
-# Call the discover function
-chiaki_py.discover(log, "192.168.42.43", "5000")
+print(discover(log, "192.168.42.43", 2000))

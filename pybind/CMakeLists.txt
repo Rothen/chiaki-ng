@@ -12,6 +12,9 @@ target_include_directories(chiaki-pybind-lib PUBLIC "include/chiaki-pybind.h")
 target_include_directories(chiaki-pybind-lib PUBLIC "include")
 target_link_libraries(chiaki-pybind-lib chiaki-lib)
 
+find_package(Python REQUIRED COMPONENTS Interpreter Development)
+find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
+
 set(PYBIND11_PYTHON_VERSION 3.10)
 include(FetchContent)
 FetchContent_Declare(

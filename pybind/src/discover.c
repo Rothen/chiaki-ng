@@ -67,19 +67,13 @@ static void discovery_cb(ChiakiDiscoveryHost *host, void *user)
 	CHIAKI_LOGI(log, "--");
 }
 
-CHIAKI_EXPORT int chiaki_pybind_discover(ChiakiLog *log, const char *host, const char *timeout)
+CHIAKI_EXPORT ChiakiErrorCode chiaki_pybind_discover(ChiakiLog *log, const char *host, const float timeout)
 {
-	float timeout_sec = 2;
 	if(!host)
 	{
 		fprintf(stderr, "No host specified, see --help.\n");
 		return 1;
 	}
-
-	if(timeout)
-	{
-        timeout_sec = atof(timeout);
-    }
 
 #ifdef _WIN32
     initialize_winsock(); // Ensure Winsock is started
@@ -101,8 +95,8 @@ CHIAKI_EXPORT int chiaki_pybind_discover(ChiakiLog *log, const char *host, const
 	if(r != 0)
 	{
 		CHIAKI_LOGE(log, "getaddrinfo failed");
-		return 1;
-	}
+        return CHIAKI_ERR_HOST_UNREACH;
+    }
 
 	struct sockaddr *host_addr = NULL;
 	socklen_t host_addr_len = 0;
@@ -125,8 +119,8 @@ CHIAKI_EXPORT int chiaki_pybind_discover(ChiakiLog *log, const char *host, const
 	if(!host_addr)
 	{
 		CHIAKI_LOGE(log, "Failed to get addr for hostname");
-		return 1;
-	}
+        return CHIAKI_ERR_HOST_UNREACH;
+    }
 
 	ChiakiDiscoveryPacket packet;
 	memset(&packet, 0, sizeof(packet));
@@ -163,24 +157,24 @@ CHIAKI_EXPORT int chiaki_pybind_discover(ChiakiLog *log, const char *host, const
 	err = chiaki_discovery_send(&discovery, &packet, host_addr, host_addr_len);
 	if(err != CHIAKI_ERR_SUCCESS)
 		CHIAKI_LOGE(log, "Failed to send discovery packet for PS5: %s", chiaki_error_string(err));
-	uint64_t timeout_ms=(timeout_sec * 1000);
+	uint64_t timeout_ms=(timeout);
 	err = chiaki_thread_timedjoin(&thread.thread, NULL, timeout_ms);
 	if(err != CHIAKI_ERR_SUCCESS)
 	{
 		if(err == CHIAKI_ERR_TIMEOUT)
 		{
-			CHIAKI_LOGE(log, "Discovery request timed out after timeout: %.*f seconds", 1, timeout_sec);
+			CHIAKI_LOGE(log, "Discovery request timed out after timeout: %.*f ms", 1, timeout);
 			chiaki_discovery_thread_stop(&thread);
 		}
 		goto cleanup;
 	}
 	chiaki_discovery_fini(&discovery);
 	free(host_addr);
-	return 0;
+    return CHIAKI_ERR_SUCCESS;
 
 cleanup:
 	chiaki_discovery_fini(&discovery);
 cleanup_host_addr:
 	free(host_addr);
-	return 1;
+    return CHIAKI_ERR_UNKNOWN;
 }

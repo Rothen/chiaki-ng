@@ -25,17 +25,16 @@ void log_callback_proxy(ChiakiLogLevel level, const char *msg, void *user)
     }
 }
 
-// Wrapper class for ChiakiLog
 class PyChiakiLog
 {
 public:
-    uint32_t level_mask;
+    ChiakiLogLevel level;
     std::function<void(int, std::string)> log_callback;
     ChiakiLog chiaki_log;
 
-    PyChiakiLog(uint32_t level_mask = 0xFFFFFFFF) : level_mask(level_mask)
+    PyChiakiLog(ChiakiLogLevel level = CHIAKI_LOG_INFO) : level(level)
     {
-        chiaki_log.level_mask = level_mask;
+        chiaki_log.level_mask = level;
         chiaki_log.cb = log_callback_proxy;
         chiaki_log.user = &log_callback; // Store reference to callback
     }
@@ -52,12 +51,12 @@ public:
     }
 };
 
-int chiaki_pybind_discover_wrapper(PyChiakiLog &log, const std::string &host, const std::string &timeout)
+ChiakiErrorCode chiaki_pybind_discover_wrapper(PyChiakiLog &log, const std::string &host, const float timeout)
 {
-    return chiaki_pybind_discover(log.get_raw_log(), host.c_str(), timeout.c_str());
+    return chiaki_pybind_discover(log.get_raw_log(), host.c_str(), timeout);
 }
 
-int chiaki_pybind_wakeup_wrapper(ChiakiLog *log, const std::string &host, const std::string &registkey, bool ps5)
+ChiakiErrorCode chiaki_pybind_wakeup_wrapper(ChiakiLog *log, const std::string &host, const std::string &registkey, bool ps5)
 {
     return chiaki_pybind_wakeup(log, host.c_str(), registkey.c_str(), ps5);
 }
@@ -110,8 +109,8 @@ PYBIND11_MODULE(chiaki_py, m)
 
     // Expose ChiakiLog class
     py::class_<PyChiakiLog>(m, "ChiakiLog")
-        .def(py::init<uint32_t>(), py::arg("level_mask") = 0xFFFFFFFF)
-        .def("set_callback", &PyChiakiLog::set_callback, "Set the logging callback function.");
+        .def(py::init<ChiakiLogLevel>(), py::arg("level") = CHIAKI_LOG_INFO)
+        .def("set_callback", &PyChiakiLog::set_callback, py::arg("callback"), "Set the logging callback function.");
 
     m.def("discover", &chiaki_pybind_discover_wrapper,
           py::arg("log"),

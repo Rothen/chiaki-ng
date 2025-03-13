@@ -10,8 +10,8 @@
 extern "C" {
 #endif
 
-    CHIAKI_EXPORT int chiaki_pybind_discover(ChiakiLog *log, const char *host, const char *timeout);
-    CHIAKI_EXPORT int chiaki_pybind_wakeup(ChiakiLog *log, const char *host, const char *registkey, bool ps5);
+    CHIAKI_EXPORT ChiakiErrorCode chiaki_pybind_discover(ChiakiLog *log, const char *host, const float timeout);
+    CHIAKI_EXPORT ChiakiErrorCode chiaki_pybind_wakeup(ChiakiLog *log, const char *host, const char *registkey, bool ps5);
 
 #ifdef __cplusplus
 }

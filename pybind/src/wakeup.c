@@ -15,23 +15,23 @@
 	{ 0 }
 };*/
 
-CHIAKI_EXPORT int chiaki_pybind_wakeup(ChiakiLog *log, const char *host, const char *registkey, bool ps5)
+CHIAKI_EXPORT ChiakiErrorCode chiaki_pybind_wakeup(ChiakiLog *log, const char *host, const char *registkey, bool ps5)
 {
 	if(!host)
 	{
 		fprintf(stderr, "No host specified, see --help.\n");
-		return 1;
-	}
+        return CHIAKI_ERR_PARSE_ADDR;
+    }
 	if(!registkey)
 	{
 		fprintf(stderr, "No registration key specified, see --help.\n");
-		return 1;
-	}
+        return CHIAKI_ERR_INVALID_DATA;
+    }
 	if(strlen(registkey) > 8)
 	{
 		fprintf(stderr, "Given registkey is too long.\n");
-		return 1;
-	}
+        return CHIAKI_ERR_INVALID_DATA;
+    }
 
 	uint64_t credential = (uint64_t)strtoull(registkey, NULL, 16);
 
