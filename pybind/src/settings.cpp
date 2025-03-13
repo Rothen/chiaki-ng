@@ -254,119 +254,8 @@ Settings::Settings(const std::string &conf) : time_format("yyyy-MM-dd HH:mm:ss t
 	LoadHiddenHosts();
 	LoadManualHosts();
 	LoadControllerMappings();
-	default_settings.setFallbacksEnabled(false);
-	MigrateSettings(&default_settings);
-	MigrateVideoProfile(&default_settings);
-	default_settings.setValue("version", SETTINGS_VERSION);
 	LoadProfiles();
 	InitializePlaceboSettings(&placebo_settings);
-}
-
-void Settings::ExportSettings(std::string filepath)
-{
-	// append ini if not already added
-	QFileInfo info(filepath);
-	if(info.suffix().isEmpty())
-		filepath += ".ini";
-	QFile file(filepath);
-	file.open(QIODevice::ReadWrite);
-	file.close();
-	SettingsObj settings_backup(filepath, SettingsObj::IniFormat);
-	SaveRegisteredHosts(&settings_backup);
-	SaveHiddenHosts(&settings_backup);
-	SaveManualHosts(&settings_backup);
-	SaveControllerMappings(&settings_backup);
-    std::stringList keys = settings.allKeys();
-    for( std::stringList::iterator i = keys.begin(); i != keys.end(); i++ )
-    {
-        settings_backup.setValue( *i, settings.value( *i ) );
-    }
-	// set hw decoder to auto since it's recommended and a platform specific decoder could cause a crash if imported on another platform
-	settings_backup.setValue("settings/hw_decoder", "auto");
-	settings_backup.setValue("settings/this_profile", GetCurrentProfile());
-}
-
-
-void Settings::ExportPlaceboSettings(std::string filepath)
-{
-	// append ini if not already added
-	QFileInfo info(filepath);
-	if(info.suffix().isEmpty())
-		filepath += ".ini";
-	// create file if it doesn't exist
-	QFile file(filepath);
-	file.open(QIODevice::ReadWrite);
-	file.close();
-	SettingsObj settings_backup(filepath, SettingsObj::IniFormat);
-    std::stringList keys = placebo_settings.allKeys();
-    for( std::stringList::iterator i = keys.begin(); i != keys.end(); i++ )
-    {
-        settings_backup.setValue( *i, placebo_settings.value( *i ) );
-    }
-}
-
-std::map<std::string, std::string> Settings::GetPlaceboValues()
-{
-	placebo_settings.beginGroup("placebo_settings");
-	std::stringList keys = placebo_settings.allKeys();
-	keys.removeOne("version");
-	std::map<std::string, std::string> placeboMap;
-	foreach (const std::string &key, keys)
-	{
-		placeboMap.insert(key, placebo_settings.value(key).toString());
-	}
-	placebo_settings.endGroup();
-	return placeboMap;
-}
-
-void Settings::ImportSettings(std::string filepath)
-{
-	SettingsObj settings_backup(filepath, SettingsObj::IniFormat);
-	LoadRegisteredHosts(&settings_backup);
-	LoadHiddenHosts(&settings_backup);
-	LoadManualHosts(&settings_backup);
-	LoadControllerMappings(&settings_backup);
-	std::string profile = settings_backup.value("settings/this_profile").toString();
-	if(profile.isEmpty())
-	{
-		settings.clear();
-		SaveRegisteredHosts();
-		SaveHiddenHosts();
-		SaveManualHosts();
-		SaveControllerMappings();
-		std::stringList keys = settings_backup.allKeys();
-		for( std::stringList::iterator i = keys.begin(); i != keys.end(); i++ )
-		{
-			settings.setValue( *i, settings_backup.value( *i ) );
-		}
-		SetCurrentProfile(std::move(profile));
-	}
-	else
-	{
-		SettingsObj profile_settings(QCoreApplication::organizationName(), std::stringLiteral("%1-%2").arg(QCoreApplication::applicationName(), profile));
-		profile_settings.clear();
-		SaveRegisteredHosts(&profile_settings);
-		SaveHiddenHosts(&profile_settings);
-		SaveManualHosts(&profile_settings);
-		SaveControllerMappings(&profile_settings);
-		std::stringList keys = settings_backup.allKeys();
-		for( std::stringList::iterator i = keys.begin(); i != keys.end(); i++ )
-		{
-			profile_settings.setValue( *i, settings_backup.value( *i ) );
-		}
-		SetCurrentProfile(std::move(profile));
-	}
-}
-
-void Settings::ImportPlaceboSettings(std::string filepath)
-{
-	SettingsObj settings_backup(filepath, SettingsObj::IniFormat);
-	placebo_settings.clear();
-	std::stringList keys = settings_backup.allKeys();
-	for( std::stringList::iterator i = keys.begin(); i != keys.end(); i++ )
-	{
-		placebo_settings.setValue( *i, settings_backup.value( *i ) );
-	}
 }
 
 uint32_t Settings::GetLogLevelMask()
@@ -375,26 +264,6 @@ uint32_t Settings::GetLogLevelMask()
 	if(!GetLogVerbose())
 		mask &= ~CHIAKI_LOG_VERBOSE;
 	return mask;
-}
-
-QRect Settings::GetGeometry() const
-{
-	return settings.value("settings/geometry", QRect()).toRect();
-}
-
-void Settings::SetGeometry(QRect geometry)
-{
-	settings.setValue("settings/geometry", geometry);
-}
-
-QRect Settings::GetStreamGeometry() const
-{
-	return settings.value("settings/stream_geometry", QRect()).toRect();
-}
-
-void Settings::SetStreamGeometry(QRect geometry)
-{
-	settings.setValue("settings/stream_geometry", geometry);
 }
 
 static const std::map<RumbleHapticsIntensity, std::string> intensities = {
@@ -722,17 +591,6 @@ void Settings::SetCustomResolutionHeight(uint length)
 	settings.setValue("settings/custom_resolution_length", length);
 }
 
-RegisteredHost Settings::GetAutoConnectHost() const
-{
-	const QByteArray mac = settings.value("settings/auto_connect_mac").toByteArray();
-	return GetRegisteredHost(mac.size() == 6 ? HostMAC((const uint8_t *)mac.constData()) : HostMAC());
-}
-
-void Settings::SetAutoConnectHost(const QByteArray &mac)
-{
-	settings.setValue("settings/auto_connect_mac", mac);
-}
-
 std::string Settings::GetHardwareDecoder() const
 {
 	return settings.value("settings/hw_decoder", "auto").toString();
@@ -852,11 +710,6 @@ void Settings::SetPsnAuthTokenExpiry(std::string expiry_date)
 	settings.setValue("settings/psn_auth_token_expiry", expiry_date);
 }
 
-std::string Settings::GetCurrentProfile() const
-{
-	return default_settings.value("settings/current_profile").toString();
-}
-
 void Settings::SetCurrentProfile(std::string profile)
 {
 	if(!profile.isEmpty() && !profiles.contains(profile))
@@ -865,7 +718,6 @@ void Settings::SetCurrentProfile(std::string profile)
 		SaveProfiles();
 		emit ProfilesUpdated();
 	}
-	default_settings.setValue("settings/current_profile", profile);
 	emit CurrentProfileChanged();
 }
 

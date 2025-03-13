@@ -1,6 +1,6 @@
 git submodule update --init --recursive
 
-pip install --user protobuf --break-system-packages
+pip install --user protobuf grpcio-tools setuptools --break-system-packages
 
 brew update
 brew install --force streetpea/streetpea/chiaki-ng-qt@6 \
@@ -17,17 +17,22 @@ brew install --force streetpea/streetpea/chiaki-ng-qt@6 \
     libplacebo \
     wget \
     python-setuptools \
-    json-c miniupnpc || true
+    nanopb \
+    libudev \
+    libevdev \
+    json-c miniupnpc
 
 cmake -S . -B build -G "Ninja" \
     -DCMAKE_BUILD_TYPE=Debug \
     -DCHIAKI_ENABLE_PYBIND=ON \
     -DCHIAKI_ENABLE_CLI=OFF \
     -DCHIAKI_ENABLE_GUI=OFF \
-    -DCHIAKI_ENABLE_STEAMDECK_NATIVE=OFF \
+    -DPython_EXECUTABLE=$(which python) \
+    -DPython3_EXECUTABLE=$(which python3) \
     -DCHIAKI_ENABLE_STEAMDECK_NATIVE=OFF \
     -DCHIAKI_ENABLE_STEAM_SHORTCUT=OFF \
-    -DCMAKE_PREFIX_PATH="$(brew --prefix)/opt/@openssl@3;$(brew --prefix)/opt/chiaki-ng-qt@6"
+    -DCMAKE_PREFIX_PATH="$(brew --prefix openssl);$(brew --prefix chiaki-ng-qt)" \
+    -DCMAKE_POSITION_INDEPENDENT_CODE=ON
 
 export CPATH=$(brew --prefix)/opt/ffmpeg/include
 cmake --build build --config Debug --clean-first --target chiaki_py

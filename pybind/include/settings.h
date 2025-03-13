@@ -213,136 +213,10 @@ unsigned stou(std::string const &str, size_t *idx = 0, int base = 10)
     return result;
 }
 
-class SettingsObj
-{
-private:
-    std::unordered_map<std::string, std::string> data;
-    std::unordered_map<std::string, std::vector<uint8_t>> binaryData;
-    std::string filepath;
-
-public:
-    explicit SettingsObj(const std::string &filepath) : filepath(filepath)
-    {
-        LoadFromFile();
-    }
-
-    explicit SettingsObj() { }
-
-    void setValue(const std::string &key, const std::string &value)
-    {
-        data[key] = value;
-    }
-
-    void setValue(const std::string &key, int value)
-    {
-        data[key] = std::to_string(value);
-    }
-
-    void setValue(const std::string &key, uint value)
-    {
-        data[key] = std::to_string(value);
-    }
-
-    void setValue(const std::string &key, float value)
-    {
-        data[key] = std::to_string(value);
-    }
-
-    void setValue(const std::string &key, bool value)
-    {
-        data[key] = value ? "true" : "false";
-    }
-
-    void setValue(const std::string &key, const std::vector<uint8_t> &value)
-    {
-        binaryData[key] = value;
-    }
-
-    std::string getValue(const std::string &key, const std::string &defaultValue = "") const
-    {
-        auto it = data.find(key);
-        return it != data.end() ? it->second : defaultValue;
-    }
-
-    int getIntValue(const std::string &key, int defaultValue = 0) const
-    {
-        auto it = data.find(key);
-        return it != data.end() ? std::stoi(it->second) : defaultValue;
-    }
-
-    unsigned getUIntValue(const std::string &key, unsigned defaultValue = 0) const
-    {
-        auto it = data.find(key);
-        return it != data.end() ? stou(it->second) : defaultValue;
-    }
-
-    bool getBoolValue(const std::string &key, bool defaultValue = false) const
-    {
-        auto it = data.find(key);
-        return it != data.end() ? (it->second == "true") : defaultValue;
-    }
-
-    float getFloatValue(const std::string &key, float defaultValue = false) const
-    {
-        auto it = data.find(key);
-        return it != data.end() ? std::stof(it->second) : defaultValue;
-    }
-
-    std::vector<uint8_t> getBinaryValue(const std::string &key) const
-    {
-        auto it = binaryData.find(key);
-        return it != binaryData.end() ? it->second : std::vector<uint8_t>{};
-    }
-
-    void LoadFromFile()
-    {
-        std::ifstream file(filepath);
-        if (!file.is_open())
-            return;
-
-        std::string line;
-        while (std::getline(file, line))
-        {
-            std::istringstream iss(line);
-            std::string key, value;
-            if (std::getline(iss, key, '=') && std::getline(iss, value))
-            {
-                data[key] = value;
-            }
-        }
-
-        file.close();
-    }
-
-    void SaveToFile() const
-    {
-        if (filepath.empty())
-        {
-            return;
-        }
-
-        std::ofstream file(filepath);
-        if (!file.is_open())
-        {
-            std::cerr << "Error: Unable to open file for writing: " << filepath << std::endl;
-            return;
-        }
-
-        for (const auto &pair : data)
-        {
-            file << pair.first << "=" << pair.second << "\n";
-        }
-
-        file.close();
-    }
-};
-
 class Settings
 {
 	private:
 		SettingsObj settings;
-		SettingsObj default_settings;
-		SettingsObj placebo_settings;
 		std::string time_format;
 		std::map<HostMAC, HiddenHost> hidden_hosts;
 
@@ -372,59 +246,23 @@ class Settings
 	public:
 		explicit Settings(const std::string &conf);
 
-		void ExportSettings(std::string filepath);
-		void ImportSettings(std::string filepath);
-
-		void ExportPlaceboSettings(std::string filepath);
-		void ImportPlaceboSettings(std::string filepath);
-
-		std::map<std::string, std::string> GetPlaceboValues();
-
-		ChiakiDisableAudioVideo GetAudioVideoDisabled() const       { return static_cast<ChiakiDisableAudioVideo>(settings.getIntValue("settings/audio_video_disabled", 0)); }
-		void SetAudioVideoDisabled(ChiakiDisableAudioVideo disabled) { settings.setValue("settings/audio_video_disabled", disabled); }
-
-		bool GetDiscoveryEnabled() const		{ return settings.getBoolValue("settings/auto_discovery", true); }
-		void SetDiscoveryEnabled(bool enabled)	{ settings.setValue("settings/auto_discovery", enabled); }
-
-		Rect GetGeometry() const;
-		void SetGeometry(Rect geometry);
-
-		Rect GetStreamGeometry() const;
-		void SetStreamGeometry(Rect geometry);
-
-		bool GetRemotePlayAsk() const           { return settings.getBoolValue("settings/remote_play_ask", true); }
-		void SetRemotePlayAsk(bool asked)       { settings.setValue("settings/remote_play_ask", asked); }
-
-		bool GetAddSteamShortcutAsk() const           { return settings.getBoolValue("settings/add_steam_shortcut_ask", true); }
-		void SetAddSteamShortcutAsk(bool asked)       { settings.setValue("settings/add_steam_shortcut_ask", asked); }
+		ChiakiDisableAudioVideo GetAudioVideoDisabled() const 
+        { 
+            return static_cast<ChiakiDisableAudioVideo>(settings.getIntValue("settings/audio_video_disabled", 0));
+        }
 
 		bool GetLogVerbose() const 				{ return settings.getBoolValue("settings/log_verbose", false); }
-		void SetLogVerbose(bool enabled)		{ settings.setValue("settings/log_verbose", enabled); }
 		uint32_t GetLogLevelMask();
 
-		bool GetHideCursor() const				{ return settings.getBoolValue("settings/hide_cursor", true); }
-		void SetHideCursor(bool enabled)		{ settings.setValue("settings/hide_cursor", enabled); }
 
 		RumbleHapticsIntensity GetRumbleHapticsIntensity() const;
 		void SetRumbleHapticsIntensity(RumbleHapticsIntensity intensity);
 
-		bool GetShowStreamStats() const            { return settings.getBoolValue("settings/show_stream_stats", false); }
-		void SetShowStreamStats(bool enabled)      { settings.setValue("settings/show_stream_stats", enabled); }
-
 		bool GetButtonsByPosition() const 		{ return settings.getBoolValue("settings/buttons_by_pos", false); }
 		void SetButtonsByPosition(bool enabled) { settings.setValue("settings/buttons_by_pos", enabled); }
 
-		bool GetAllowJoystickBackgroundEvents() const { return settings.getBoolValue("settings/allow_joystick_background_events", true); }
-		void SetAllowJoystickBackgroundEvents(bool enabled) { settings.setValue("settings/allow_joystick_background_events", enabled); }
-
 		bool GetStartMicUnmuted() const          { return settings.getBoolValue("settings/start_mic_unmuted", false); }
 		void SetStartMicUnmuted(bool unmuted) { return settings.setValue("settings/start_mic_unmuted", unmuted); }
-
-		bool GetAutomaticConnect() const         { return settings.getBoolValue("settings/automatic_connect", false); }
-		void SetAutomaticConnect(bool autoconnect)    { settings.setValue("settings/automatic_connect", autoconnect); }
-
-		bool GetFullscreenDoubleClickEnabled() const	   { return settings.getBoolValue("settings/fullscreen_doubleclick", false); }
-		void SetFullscreenDoubleClickEnabled(bool enabled) { settings.setValue("settings/fullscreen_doubleclick", enabled); }
 
 		float GetHapticOverride() const 			{ return settings.getFloatValue("settings/haptic_override", 1.0); }
 		void SetHapticOverride(float override)	{ settings.setValue("settings/haptic_override", override); }
@@ -501,9 +339,6 @@ class Settings
 
 		float GetPacketLossMax() const;
 		void SetPacketLossMax(float factor);
-
-		RegisteredHost GetAutoConnectHost() const;
-        void SetAutoConnectHost(const std::vector<uint8_t> &mac);
 
         int GetAudioVolume() const;
 		void SetAudioVolume(int volume);
