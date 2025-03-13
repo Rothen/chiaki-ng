@@ -2235,8 +2235,8 @@ std::map<int, int> Settings::GetControllerMapping()
 	// Initialize with default values
 	std::map<int, int> result =
 	{
-		{CHIAKI_CONTROLLER_BUTTON_CROSS     , int::Key_Return},
-		{CHIAKI_CONTROLLER_BUTTON_MOON      , int::Key_Backspace},
+		{CHIAKI_CONTROLLER_BUTTON_CROSS     , 0},
+		{CHIAKI_CONTROLLER_BUTTON_MOON      , 1},
 		{CHIAKI_CONTROLLER_BUTTON_BOX       , 2},
 		{CHIAKI_CONTROLLER_BUTTON_PYRAMID   , 3},
 		{CHIAKI_CONTROLLER_BUTTON_DPAD_LEFT , 4},
