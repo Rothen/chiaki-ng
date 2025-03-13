@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 
 #include <chiaki-pybind.h>
+#include <streamsession.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -124,4 +125,49 @@ PYBIND11_MODULE(chiaki_py, m)
           py::arg("registkey"),
           py::arg("ps5"),
           "Wakeup Chiaki device.");
+
+    py::class_<StreamSessionConnectInfo>(m, "StreamSessionConnectInfo")
+        .def(py::init<>())
+        .def(py::init<Settings *, ChiakiTarget, std::string, std::string, std::vector<uint8_t>,
+                      std::vector<uint8_t>, std::string, std::string, bool, bool, bool, bool>())
+        .def_readwrite("settings", &StreamSessionConnectInfo::settings)
+        .def_readwrite("key_map", &StreamSessionConnectInfo::key_map)
+        .def_readwrite("decoder", &StreamSessionConnectInfo::decoder)
+        .def_readwrite("hw_decoder", &StreamSessionConnectInfo::hw_decoder)
+        .def_readwrite("audio_out_device", &StreamSessionConnectInfo::audio_out_device)
+        .def_readwrite("audio_in_device", &StreamSessionConnectInfo::audio_in_device)
+        .def_readwrite("log_level_mask", &StreamSessionConnectInfo::log_level_mask)
+        .def_readwrite("log_file", &StreamSessionConnectInfo::log_file)
+        .def_readwrite("target", &StreamSessionConnectInfo::target)
+        .def_readwrite("host", &StreamSessionConnectInfo::host)
+        .def_readwrite("nickname", &StreamSessionConnectInfo::nickname)
+        .def_readwrite("regist_key", &StreamSessionConnectInfo::regist_key)
+        .def_readwrite("morning", &StreamSessionConnectInfo::morning)
+        .def_readwrite("initial_login_pin", &StreamSessionConnectInfo::initial_login_pin)
+        .def_readwrite("video_profile", &StreamSessionConnectInfo::video_profile)
+        .def_readwrite("packet_loss_max", &StreamSessionConnectInfo::packet_loss_max)
+        .def_readwrite("audio_buffer_size", &StreamSessionConnectInfo::audio_buffer_size)
+        .def_readwrite("audio_volume", &StreamSessionConnectInfo::audio_volume)
+        .def_readwrite("fullscreen", &StreamSessionConnectInfo::fullscreen)
+        .def_readwrite("zoom", &StreamSessionConnectInfo::zoom)
+        .def_readwrite("stretch", &StreamSessionConnectInfo::stretch)
+        .def_readwrite("enable_keyboard", &StreamSessionConnectInfo::enable_keyboard)
+        .def_readwrite("enable_dualsense", &StreamSessionConnectInfo::enable_dualsense)
+        .def_readwrite("auto_regist", &StreamSessionConnectInfo::auto_regist);
+
+    py::class_<StreamSession>(m, "StreamSession")
+        .def(py::init<const StreamSessionConnectInfo &>())
+        .def("start", &StreamSession::Start)
+        .def("stop", &StreamSession::Stop)
+        .def("go_to_bed", &StreamSession::GoToBed)
+        .def("set_login_pin", &StreamSession::SetLoginPIN)
+        .def("go_home", &StreamSession::GoHome)
+        .def("get_host", &StreamSession::GetHost)
+        .def("is_connected", &StreamSession::IsConnected)
+        .def("is_connecting", &StreamSession::IsConnecting)
+        .def("get_measured_bitrate", &StreamSession::GetMeasuredBitrate)
+        .def("get_average_packet_loss", &StreamSession::GetAveragePacketLoss)
+        .def("get_muted", &StreamSession::GetMuted)
+        .def("set_audio_volume", &StreamSession::SetAudioVolume)
+        .def("get_cant_display", &StreamSession::GetCantDisplay);
 }

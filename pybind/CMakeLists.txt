@@ -3,12 +3,25 @@ if(NOT DEPS_FOLDER)
 endif(NOT DEPS_FOLDER)
 
 set(SOURCE
-		include/chiaki-pybind.h
-		src/discover.c
-		src/wakeup.c)
+    include/chiaki-pybind.h
+    include/controllermanager.h
+    include/elapsed_timer.h
+    include/exception.h
+    include/py_host.h
+    include/sessionlog.h
+    include/settings.h
+    include/streamsession.h
+    include/timer.h
+    src/controllermanager.cpp
+    src/discover.c
+    src/py_host.cpp
+    src/sessionlog.cpp
+    src/settings.cpp
+    src/streamsession.cpp
+    src/wakeup.c)
 
 add_library(chiaki-pybind-lib STATIC ${SOURCE})
-target_include_directories(chiaki-pybind-lib PUBLIC "include/chiaki-pybind.h")
+# target_include_directories(chiaki-pybind-lib PUBLIC "include/chiaki-pybind.h")
 target_include_directories(chiaki-pybind-lib PUBLIC "include")
 target_link_libraries(chiaki-pybind-lib chiaki-lib)
 
