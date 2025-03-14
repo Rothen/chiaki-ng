@@ -1,6 +1,9 @@
 git submodule update --init --recursive
 
 pip install --user protobuf grpcio-tools setuptools --break-system-packages
+conda install -c conda-forge gcc=12.1.0
+
+export PATH=$(echo $PATH | tr ':' '\n' | grep -v '/mnt/c/' | tr '\n' ':')
 
 sudo apt install -y ninja-build \
     protobuf-compiler \
@@ -18,7 +21,12 @@ sudo apt install -y ninja-build \
     libidn2-0-dev \
     libnghttp2-dev \
     libssh2-1-dev \
-    libfmt-dev
+    libfmt-dev \
+    libavcodec-dev \
+    libavformat-dev \
+    libavutil-dev \
+    libswscale-dev \
+    libavdevice-dev
 
 cmake -S . -B build -G "Ninja" \
     -DCMAKE_BUILD_TYPE=Debug \
