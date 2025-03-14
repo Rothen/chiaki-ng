@@ -22,15 +22,15 @@ SessionLog::SessionLog(StreamSession *session, uint32_t level_mask, const std::s
     }
     else
     {
-        file->open(filename, std::ios::out | std::ios::app);
-        if (!file->is_open())
+        //file->open(filename, std::ios::out | std::ios::app);
+        /*if (!file->is_open())
         {
             CHIAKI_LOGI(&log, "Failed to open file %s for logging", filename.c_str());
         }
         else
         {
             CHIAKI_LOGI(&log, "Logging to file %s", filename.c_str());
-        }
+        }*/
     }
 
     CHIAKI_LOGI(&log, "Chiaki Version " CHIAKI_VERSION);
@@ -45,7 +45,7 @@ void SessionLog::Log(ChiakiLogLevel level, const char *msg)
 {
 	chiaki_log_cb_print(level, msg, nullptr);
 
-    if (file->is_open())
+    /*if (file->is_open())
     {
         std::lock_guard<std::mutex> lock(file_mutex);
         auto now = std::chrono::system_clock::now();
@@ -60,7 +60,7 @@ void SessionLog::Log(ChiakiLogLevel level, const char *msg)
              << "[" << chiaki_log_level_char(level) << "] "
              << msg << std::endl;
         file->flush();
-    }
+    }*/
 }
 
 class SessionLogPrivate

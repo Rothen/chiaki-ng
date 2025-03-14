@@ -41,8 +41,10 @@ connect_info: StreamSessionConnectInfo = StreamSessionConnectInfo(
 print(connect_info)
 
 stream_session: StreamSession = StreamSession(connect_info)
-
 print(stream_session)
+print(stream_session.start())
+
+
 # log.set_callback(lambda level, message: print(f"[{level}] {message}"))
 # print(wakeup(log, host, registKey, ps5))
 # print(discover(log, host, discover_timout))

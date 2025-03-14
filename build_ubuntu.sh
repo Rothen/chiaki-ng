@@ -17,7 +17,8 @@ sudo apt install -y ninja-build \
     libnanopb-dev \
     libidn2-0-dev \
     libnghttp2-dev \
-    libssh2-1-dev
+    libssh2-1-dev \
+    libfmt-dev
 
 cmake -S . -B build -G "Ninja" \
     -DCMAKE_BUILD_TYPE=Debug \
