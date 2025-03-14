@@ -38,7 +38,7 @@ SessionLog::SessionLog(StreamSession *session, uint32_t level_mask, const std::s
 
 SessionLog::~SessionLog()
 {
-	delete file;
+	// delete file;
 }
 
 void SessionLog::Log(ChiakiLogLevel level, const char *msg)

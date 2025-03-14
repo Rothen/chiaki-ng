@@ -120,8 +120,9 @@ class Settings
 
 		ChiakiDisableAudioVideo GetAudioVideoDisabled() const { return audioVideoDisabled;  }
 
-		bool GetLogVerbose() const { return logVerbose; }
-		uint32_t GetLogLevelMask() const { uint32_t mask = CHIAKI_LOG_ALL; if (!GetLogVerbose()) { mask &= ~CHIAKI_LOG_VERBOSE; } return mask; };
+        bool GetLogVerbose() const { return logVerbose; }
+        void SetLogVerbose(bool logVerbose) { this->logVerbose = logVerbose; }
+        uint32_t GetLogLevelMask() const { uint32_t mask = CHIAKI_LOG_ALL; if (!GetLogVerbose()) { mask &= ~CHIAKI_LOG_VERBOSE; } return mask; };
 
         RumbleHapticsIntensity GetRumbleHapticsIntensity() const { return rumbleHapticsIntensity; };
         void SetRumbleHapticsIntensity(RumbleHapticsIntensity rumbleHapticsIntensity) { this->rumbleHapticsIntensity = rumbleHapticsIntensity; }

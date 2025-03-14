@@ -2,11 +2,14 @@
 
 #include "py_streamsession.h"
 #include "py_settings.h"
+#include "py_av_frame.h"
 
 #include <chiaki-pybind.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
+#include <set>
+#include <optional> // Required for std::optional
 
 #define PYBIND11_DETAILED_ERROR_MESSAGES
 #include <pybind11/pybind11.h>
@@ -14,6 +17,15 @@
 #include <pybind11/stl.h>
 #include <pybind11/complex.h>
 #include <pybind11/functional.h>
+
+extern "C"
+{
+#include <libavutil/frame.h>
+#include <libavutil/imgutils.h>
+#include <libavcodec/avcodec.h>
+#include <libavutil/hwcontext.h>
+#include <libswscale/swscale.h>
+}
 
 namespace py = pybind11;
 
@@ -63,9 +75,173 @@ ChiakiErrorCode chiaki_pybind_wakeup_wrapper(PyChiakiLog &log, const std::string
     return chiaki_pybind_wakeup(log.get_raw_log(), host.c_str(), registkey.c_str(), ps5);
 }
 
+/*PyAVFrame get_frame(StreamSession &session, bool disable_zero_copy)
+{
+    PyAVFrame pyAvFrame;
+
+    ChiakiFfmpegDecoder *decoder = session.GetFfmpegDecoder();
+    if (!decoder)
+    {
+        // qCCritical(chiakiGui) << "Session has no FFmpeg decoder";
+        return pyAvFrame;
+    }
+    int32_t frames_lost;
+    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+    if (!frame)
+        // qCCritical(chiakiGui) << "Session has no FFmpeg decoder";
+        return pyAvFrame;
+
+    static const std::set<int> zero_copy_formats = { AV_PIX_FMT_VULKAN };
+
+    if (frame->hw_frames_ctx && (zero_copy_formats.find(frame->format) != zero_copy_formats.end() || disable_zero_copy))
+    {
+        AVFrame *sw_frame = av_frame_alloc();
+        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
+        {
+            // qCWarning(chiakiGui) << "Failed to transfer frame from hardware";
+            av_frame_unref(frame);
+            av_frame_free(&sw_frame);
+            return pyAvFrame;
+        }
+        av_frame_copy_props(sw_frame, frame);
+        av_frame_unref(frame);
+        frame = sw_frame;
+    }
+
+    pyAvFrame.frame = frame;
+    return pyAvFrame;
+}*/
+
+// Function to return a NumPy array
+py::object get_frame(StreamSession &session, bool disable_zero_copy)
+{
+    // Retrieve the FFmpeg decoder
+    ChiakiFfmpegDecoder *decoder = session.GetFfmpegDecoder();
+
+    if (!decoder)
+    {
+        return py::str("Session has no FFmpeg decoder");
+    }
+
+    int32_t frames_lost;
+    AVFrame *frame = chiaki_ffmpeg_decoder_pull_frame(decoder, &frames_lost);
+    if (!frame)
+    {
+        return py::str("Failed to pull frame from FFmpeg decoder");
+    }
+
+    // Ensure proper cleanup if an error occurs
+    struct AVFrameGuard
+    {
+        AVFrame *frame;
+        ~AVFrameGuard() { av_frame_unref(frame); }
+    } frame_guard{frame};
+
+    // Handle Vulkan format
+    if (frame->format == AV_PIX_FMT_VULKAN)
+    {
+        AVFrame *sw_frame = av_frame_alloc();
+        if (!sw_frame)
+        {
+            return py::str("Failed to allocate software frame");
+        }
+
+        // Transfer Vulkan frame to CPU memory
+        if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
+        {
+            av_frame_free(&sw_frame);
+            return py::str("Failed to transfer Vulkan frame to CPU");
+        }
+
+        av_frame_copy_props(sw_frame, frame);
+        av_frame_unref(frame);
+        frame = sw_frame;
+        frame_guard.frame = frame; // Ensure proper cleanup
+    }
+
+    if (frame->format == AV_PIX_FMT_NV12)
+    {
+        SwsContext *sws_ctx = sws_getContext(
+            frame->width, frame->height, AV_PIX_FMT_NV12,  // Source format
+            frame->width, frame->height, AV_PIX_FMT_RGB24, // Target format
+            SWS_BILINEAR, nullptr, nullptr, nullptr);
+
+        if (!sws_ctx)
+        {
+            return py::str("Failed to create SwsContext");
+        }
+
+        // Allocate the RGB frame
+        AVFrame *rgb_frame = av_frame_alloc();
+        if (!rgb_frame)
+        {
+            sws_freeContext(sws_ctx);
+            return py::str("Failed to allocate RGB frame");
+        }
+
+        rgb_frame->format = AV_PIX_FMT_RGB24;
+        rgb_frame->width = frame->width;
+        rgb_frame->height = frame->height;
+        if (av_frame_get_buffer(rgb_frame, 1) < 0)
+        {
+            av_frame_free(&rgb_frame);
+            sws_freeContext(sws_ctx);
+            return py::str("Failed to allocate buffer for RGB frame");
+        }
+
+        // Convert NV12 to RGB24
+        sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, rgb_frame->data, rgb_frame->linesize);
+
+        sws_freeContext(sws_ctx);
+        av_frame_unref(frame);
+        frame = rgb_frame;
+        frame_guard.frame = frame; // Ensure cleanup
+    }
+
+    // Convert to RGB24 if necessary
+    if (frame->format != AV_PIX_FMT_RGB24)
+    {
+        return py::str("Unsupported format after Vulkan transfer");
+    }
+
+    int height = frame->height;
+    int width = frame->width;
+    int channels = 3;
+    int data_size = av_image_get_buffer_size((AVPixelFormat)frame->format, width, height, 1);
+
+    if (data_size <= 0)
+    {
+        return py::str("Failed to get image buffer size");
+    }
+
+    // Copy frame data into a buffer
+    std::vector<uint8_t> buffer(data_size);
+    av_image_copy_to_buffer(buffer.data(), data_size, frame->data, frame->linesize, (AVPixelFormat)frame->format, width, height, 1);
+
+    // Return as NumPy array
+    return py::array_t<uint8_t>(
+        {height, width, channels},       // Shape
+        {width * channels, channels, 1}, // Strides
+        buffer.data()                    // Data
+    );
+}
+
 PYBIND11_MODULE(chiaki_py, m)
 {
     m.doc() = "Python bindings for Chiaki CLI commands";
+
+    py::class_<PyAVFrame>(m, "AVFrame")
+        .def(py::init<>())
+        .def("width", &PyAVFrame::width)
+        .def("set_width", &PyAVFrame::set_width)
+        .def("height", &PyAVFrame::height)
+        .def("set_height", &PyAVFrame::set_height)
+        .def("format", &PyAVFrame::format)
+        .def("set_format", &PyAVFrame::set_format)
+        .def("pts", &PyAVFrame::pts)
+        .def("set_pts", &PyAVFrame::set_pts)
+        .def("data", &PyAVFrame::data)
+        .def("to_numpy", &PyAVFrame::to_numpy, "Convert frame data to numpy array");
 
     py::enum_<ChiakiErrorCode>(m, "ErrorCode")
         .value("SUCCESS", CHIAKI_ERR_SUCCESS)
@@ -165,6 +341,11 @@ PYBIND11_MODULE(chiaki_py, m)
           py::arg("ps5"),
           "Wakeup Chiaki device.");
 
+    m.def("get_frame", &get_frame,
+          py::arg("session"),
+          py::arg("disable_zero_copy"),
+          "Get the next frame from the session.");
+
     py::class_<ChiakiConnectVideoProfile>(m, "ChiakiConnectVideoProfile")
         .def(py::init<>())
         .def_readwrite("width", &ChiakiConnectVideoProfile::width)
@@ -183,6 +364,7 @@ PYBIND11_MODULE(chiaki_py, m)
         .def(py::init<>())
         .def("get_audio_video_disabled", &Settings::GetAudioVideoDisabled, "Get the audio/video disabled.")
         .def("get_log_verbose", &Settings::GetLogVerbose, "Get the log verbose.")
+        .def("set_log_verbose", &Settings::SetLogVerbose, py::arg("log_verbose") , "Set the log verbose.")
         .def("get_log_level_mask", &Settings::GetLogLevelMask, "Get the log level mask.")
         .def("get_rumble_haptics_intensity", &Settings::GetRumbleHapticsIntensity, "Get the rumble haptics intensity.")
         .def("set_rumble_haptics_intensity", &Settings::SetRumbleHapticsIntensity, py::arg("rumble_haptics_intensity"), "Set the rumble haptics intensity.")
@@ -271,7 +453,7 @@ PYBIND11_MODULE(chiaki_py, m)
         .def("get_controller_mapping", &Settings::GetControllerMapping, "Get the controller mapping.")
         .def("get_controller_mapping_for_decoding", &Settings::GetControllerMappingForDecoding, "Get the controller mapping for decoding.")
         .def("__repr__", [](const Settings &s)
-            {
+             {
                 std::ostringstream repr;
                 repr << "<Settings("
                     << "logVerbose=" << (s.GetLogVerbose() ? "True" : "False") << ", "
@@ -296,9 +478,7 @@ PYBIND11_MODULE(chiaki_py, m)
                     << "audioInDevice='" << s.GetAudioInDevice() << "', "
                     << "psnAccountId='" << s.GetPsnAccountId() << "'"
                     << ")>";
-                return repr.str();
-            }
-        );
+                return repr.str(); });
 
     py::class_<StreamSessionConnectInfo>(m, "StreamSessionConnectInfo")
         .def(py::init<>())
@@ -332,6 +512,7 @@ PYBIND11_MODULE(chiaki_py, m)
         .def("get_muted", &StreamSession::GetMuted)
         .def("set_audio_volume", &StreamSession::SetAudioVolume)
         .def("get_cant_display", &StreamSession::GetCantDisplay)
+        .def("get_ffmpeg_decoder", &StreamSession::GetFfmpegDecoder)
         .def_readwrite("ffmpeg_frame_available", &StreamSession::FfmpegFrameAvailable)
         .def_readwrite("session_quit", &StreamSession::SessionQuit)
         .def_readwrite("login_pin_requested", &StreamSession::LoginPINRequested)

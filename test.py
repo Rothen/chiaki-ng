@@ -1,8 +1,15 @@
-from chiaki_py import discover, ChiakiLog, LogLevel, Target, Settings, StreamSessionConnectInfo, StreamSession
+from typing import Any
+import threading
+import time
+import signal
+import sys
+from chiaki_py import ChiakiLog, LogLevel, Target, Settings, StreamSessionConnectInfo, StreamSession, get_frame
 
-log = ChiakiLog(level=LogLevel.VERBOSE)
+exit_event = threading.Event()
+
+log = ChiakiLog(level=LogLevel.INFO)
 host = "192.168.42.43"
-regist_key = "b02d1ceb"  # 2955746539
+regist_key = "b02d1ceb"
 nickname = "PS5-083"
 ps5Id = "78c881a8214a"
 morning = "ª?RÿGC\\x1d/,ðñA\\x10öy³"
@@ -16,13 +23,12 @@ stretch = False
 ps5 = True
 discover_timout = 2000
 
-regist_key_list: list[int] = [a for a in map(ord, regist_key)]
-morning_list: list[int] = [a for a in map(ord, morning)]
-
-print(regist_key_list)
-print(morning_list)
+# regist_key_list: list[int] = [a for a in map(ord, regist_key)]
+# morning_list: list[int] = [a for a in map(ord, morning)]
 
 settings: Settings = Settings()
+settings.set_log_verbose(False)
+
 connect_info: StreamSessionConnectInfo = StreamSessionConnectInfo(
     settings=settings,
     target=Target.PS5_1,
@@ -38,12 +44,8 @@ connect_info: StreamSessionConnectInfo = StreamSessionConnectInfo(
     stretch=stretch
 )
 
-print(connect_info)
-
 stream_session: StreamSession = StreamSession(connect_info)
-
-print(stream_session)
-stream_session.ffmpeg_frame_available = lambda : print('ffmpeg_frame_available')
+stream_session.ffmpeg_frame_available = lambda: print(get_frame(stream_session, False))
 stream_session.session_quit = lambda a, b: print('session_quit')
 stream_session.login_pin_requested = lambda a: print('login_pin_requested')
 stream_session.data_holepunch_progress = lambda a: print('data_holepunch_progress')
@@ -53,7 +55,29 @@ stream_session.connected_changed = lambda : print('connected_changed')
 stream_session.measured_bitrate_changed = lambda : print('measured_bitrate_changed')
 stream_session.average_packet_loss_changed = lambda : print('average_packet_loss_changed')
 stream_session.cant_display_changed = lambda a: print('cant_display_changed')
-stream_session.start()
-# log.set_callback(lambda level, message: print(f"[{level}] {message}"))
-# print(wakeup(log, host, registKey, ps5))
-# print(discover(log, host, discover_timout))
+
+
+def signal_handler(sig: int, frame: Any) -> None:
+    """Handles Ctrl+C to stop the session gracefully."""
+    print("\nCtrl+C detected! Stopping stream session...")
+    stream_session.stop()
+    exit_event.set()
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    
+    if "-w" in sys.argv:
+        input("Press Enter to continue...")
+    print("Starting stream session...")
+    stream_session.start()
+    print("Started")
+
+    while not exit_event.is_set():
+        time.sleep(1)
+
+    print("Session closed. Exiting...")
+
+    # log.set_callback(lambda level, message: print(f"[{level}] {message}"))
+    # print(wakeup(log, host, registKey, ps5))
+    # print(discover(log, host, discover_timout))

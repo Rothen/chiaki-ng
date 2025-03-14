@@ -18,6 +18,16 @@
 #include <codecvt>
 #include <fmt/core.h>
 
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <windows.h>
+    #pragma comment(lib, "ws2_32.lib") // Link Winsock automatically
+#else
+    #include <netdb.h>
+    #include <netinet/in.h>
+#endif
+
 #define SETSU_UPDATE_INTERVAL_MS 4
 #define STEAMDECK_UPDATE_INTERVAL_MS 4
 #define STEAMDECK_HAPTIC_INTERVAL_MS 10 // check every interval
@@ -190,6 +200,11 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info)
       rumble_haptics_connected(false),
       rumble_haptics_on(false)
 {
+
+#ifdef _WIN32
+    WSADATA wsaData;
+    WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
     connected = false;
     muted = true;
     mic_connected = false;
