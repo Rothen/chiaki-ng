@@ -3,7 +3,6 @@
 #ifndef CHIAKI_PY_SETTINGS_H
 #define CHIAKI_PY_SETTINGS_H
 
-#include "py_host.h"
 #include <chiaki/session.h>
 
 #include <unordered_map>
@@ -11,36 +10,11 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
-#include <limits>
 #include <map>
 #include <list>
 #include <algorithm>
 #include <functional>
 #include <vector>
-
-class HostMAC;
-class HiddenHost;
-class RegisteredHost;
-class ManualHost;
-class PsnHost;
-
-enum class ControllerButtonExt
-{
-    // must not overlap with ChiakiControllerButton and ChiakiControllerAnalogButton
-    ANALOG_STICK_LEFT_X_UP = (1 << 18),
-    ANALOG_STICK_LEFT_X_DOWN = (1 << 19),
-    ANALOG_STICK_LEFT_Y_UP = (1 << 20),
-    ANALOG_STICK_LEFT_Y_DOWN = (1 << 21),
-    ANALOG_STICK_RIGHT_X_UP = (1 << 22),
-    ANALOG_STICK_RIGHT_X_DOWN = (1 << 23),
-    ANALOG_STICK_RIGHT_Y_UP = (1 << 24),
-    ANALOG_STICK_RIGHT_Y_DOWN = (1 << 25),
-    ANALOG_STICK_LEFT_X = (1 << 26),
-    ANALOG_STICK_LEFT_Y = (1 << 27),
-    ANALOG_STICK_RIGHT_X = (1 << 28),
-    ANALOG_STICK_RIGHT_Y = (1 << 29),
-    MISC1 = (1 << 30),
-};
 
 enum class RumbleHapticsIntensity
 {
@@ -52,631 +26,218 @@ enum class RumbleHapticsIntensity
 	VeryStrong
 };
 
-enum class DisconnectAction
-{
-	AlwaysNothing,
-	AlwaysSleep,
-	Ask
-};
-
-enum class SuspendAction
-{
-	Nothing,
-	Sleep,
-};
-
 enum class Decoder
 {
 	Ffmpeg,
 	Pi
 };
 
-enum class PlaceboPreset {
-	Fast,
-	Default,
-	HighQuality,
-	Custom
-};
-
-enum class WindowType {
-	SelectedResolution,
-	CustomResolution,
-	AdjustableResolution,
-	Fullscreen,
-	Zoom,
-	Stretch
-};
-
-enum class PlaceboUpscaler {
-	None,
-	Nearest,
-	Bilinear,
-	Oversample,
-	Bicubic,
-	Gaussian,
-	CatmullRom,
-	Lanczos,
-	EwaLanczos,
-	EwaLanczosSharp,
-	EwaLanczos4Sharpest
-};
-
-enum class PlaceboDownscaler {
-	None,
-	Box,
-	Hermite,
-	Bilinear,
-	Bicubic,
-	Gaussian,
-	CatmullRom,
-	Mitchell,
-	Lanczos
-};
-
-enum class PlaceboFrameMixer {
-	None,
-	Oversample,
-	Hermite,
-	Linear,
-	Cubic
-};
-
-enum class PlaceboDebandPreset {
-	None,
-	Default
-};
-
-enum class PlaceboSigmoidPreset {
-	None,
-	Default
-};
-
-enum class PlaceboColorAdjustmentPreset {
-	None,
-	Neutral
-};
-
-enum class PlaceboPeakDetectionPreset {
-	None,
-	Default,
-	HighQuality
-};
-
-enum class PlaceboColorMappingPreset {
-	None,
-	Default,
-	HighQuality
-};
-
-enum class PlaceboGamutMappingFunction {
-	Clip,
-	Perceptual,
-	SoftClip,
-	Relative,
-	Saturation,
-	Absolute,
-	Desaturate,
-	Darken,
-	Highlight,
-	Linear
-};
-
-enum class PlaceboToneMappingFunction {
-	Clip,
-	Spline,
-	St209440,
-	St209410,
-	Bt2390,
-	Bt2446a,
-	Reinhard,
-	Mobius,
-	Hable,
-	Gamma,
-	Linear,
-	LinearLight
-};
-
-enum class PlaceboToneMappingMetadata {
-	Any,
-	None,
-	Hdr10,
-	Hdr10Plus,
-	CieY
-};
-
-struct Rect
-{
-    int x, y, width, height;
-
-    Rect(int x = 0, int y = 0, int width = 0, int height = 0)
-        : x(x), y(y), width(width), height(height) {}
-
-    bool contains(int px, int py) const
-    {
-        return px >= x && px < x + width && py >= y && py < y + height;
-    }
-
-    bool intersects(const Rect &other) const
-    {
-        return !(x + width <= other.x || other.x + other.width <= x ||
-                 y + height <= other.y || other.y + other.height <= y);
-    }
-};
-
-unsigned stou(std::string const &str, size_t *idx = 0, int base = 10)
-{
-    unsigned long result = std::stoul(str, idx, base);
-    if (result > std::numeric_limits<unsigned>::max())
-    {
-        throw std::out_of_range("stou");
-    }
-    return result;
-}
-
 class Settings
 {
 	private:
-		SettingsObj settings;
-		std::string time_format;
-		std::map<HostMAC, HiddenHost> hidden_hosts;
+		// std::string time_format;
+		// std::map<HostMAC, HiddenHost> hidden_hosts;
+		// std::map<HostMAC, RegisteredHost> registered_hosts;
+		// std::map<std::string, RegisteredHost> nickname_registered_hosts;
+		// std::map<std::string, std::string> controller_mappings;
+		// std::list<std::string> profiles;
+		// size_t ps4s_registered;
+		// std::map<int, ManualHost> manual_hosts;
+		// int manual_hosts_id_next;
 
-		std::map<HostMAC, RegisteredHost> registered_hosts;
-		std::map<std::string, RegisteredHost> nickname_registered_hosts;
-		std::map<std::string, std::string> controller_mappings;
-		std::list<std::string> profiles;
-		size_t ps4s_registered;
-		std::map<int, ManualHost> manual_hosts;
-		int manual_hosts_id_next;
-
-		void LoadRegisteredHosts(SettingsObj *qsettings = nullptr);
-		void SaveRegisteredHosts(SettingsObj *qsettings = nullptr);
-
-		void LoadHiddenHosts(SettingsObj *qsettings = nullptr);
-		void SaveHiddenHosts(SettingsObj *qsettings = nullptr);
-
-		void LoadManualHosts(SettingsObj *qsettings = nullptr);
-		void SaveManualHosts(SettingsObj *qsettings = nullptr);
-
-		void LoadControllerMappings(SettingsObj *qsettings = nullptr);
-		void SaveControllerMappings(SettingsObj *qsettings = nullptr);
-
-		void LoadProfiles();
-		void SaveProfiles();
+        // Settings
+        ChiakiDisableAudioVideo audioVideoDisabled;
+        bool logVerbose;
+        uint32_t logLevelMask;
+        RumbleHapticsIntensity rumbleHapticsIntensity;
+        bool buttonsByPosition;
+        bool startMicUnmuted;
+        float hapticOverride;
+        ChiakiVideoResolutionPreset resolutionLocalPS4;
+        ChiakiVideoResolutionPreset resolutionRemotePS4;
+        ChiakiVideoResolutionPreset resolutionLocalPS5;
+        ChiakiVideoResolutionPreset resolutionRemotePS5;
+        ChiakiVideoFPSPreset fpsLocalPS4;
+        ChiakiVideoFPSPreset fpsRemotePS4;
+        ChiakiVideoFPSPreset fpsLocalPS5;
+        ChiakiVideoFPSPreset fpsRemotePS5;
+        unsigned int bitrateLocalPS4;
+        unsigned int bitrateRemotePS4;
+        unsigned int bitrateLocalPS5;
+        unsigned int bitrateRemotePS5;
+        ChiakiCodec codecPS4;
+        ChiakiCodec codecLocalPS5;
+        ChiakiCodec codecRemotePS5;
+        int displayTargetContrast;
+        int displayTargetPeak;
+        int displayTargetTrc;
+        int displayTargetPrim;
+        Decoder decoder;
+        std::string hardwareDecoder;
+        float packetLossMax;
+        int audioVolume;
+        unsigned int audioBufferSizeDefault;
+        unsigned int audioBufferSizeRaw;
+        unsigned int audioBufferSize;
+        std::string audioOutDevice;
+        std::string audioInDevice;
+        std::string psnAuthToken;
+        bool dpadTouchEnabled;
+        uint16_t dpadTouchIncrement;
+        unsigned int dpadTouchShortcut1;
+        unsigned int dpadTouchShortcut2;
+        unsigned int dpadTouchShortcut3;
+        unsigned int dpadTouchShortcut4;
+        std::string psnAccountId;
+        ChiakiConnectVideoProfile videoProfileLocalPS4;
+        ChiakiConnectVideoProfile videoProfileRemotePS4;
+        ChiakiConnectVideoProfile videoProfileLocalPS5;
+        ChiakiConnectVideoProfile videoProfileRemotePS5;
+        static std::string chiakiControllerButtonName;
+        std::map<int, int> controllerMapping;
+        std::map<int, int> controllerMappingForDecoding;
 
 	public:
-		explicit Settings(const std::string &conf);
+		explicit Settings();
 
-		ChiakiDisableAudioVideo GetAudioVideoDisabled() const 
-        { 
-            return static_cast<ChiakiDisableAudioVideo>(settings.getIntValue("settings/audio_video_disabled", 0));
-        }
+		ChiakiDisableAudioVideo GetAudioVideoDisabled() const { return audioVideoDisabled;  }
 
-		bool GetLogVerbose() const 				{ return settings.getBoolValue("settings/log_verbose", false); }
-		uint32_t GetLogLevelMask();
+		bool GetLogVerbose() const { return logVerbose; }
+		uint32_t GetLogLevelMask() { uint32_t mask = CHIAKI_LOG_ALL; if (!GetLogVerbose()) { mask &= ~CHIAKI_LOG_VERBOSE; } return mask; };
 
+        RumbleHapticsIntensity GetRumbleHapticsIntensity() const { return rumbleHapticsIntensity; };
+        void SetRumbleHapticsIntensity(RumbleHapticsIntensity rumbleHapticsIntensity) { this->rumbleHapticsIntensity = rumbleHapticsIntensity; }
 
-		RumbleHapticsIntensity GetRumbleHapticsIntensity() const;
-		void SetRumbleHapticsIntensity(RumbleHapticsIntensity intensity);
+        bool GetButtonsByPosition() const { return buttonsByPosition; }
+        void SetButtonsByPosition(bool buttonsByPosition) { this->buttonsByPosition = buttonsByPosition; }
 
-		bool GetButtonsByPosition() const 		{ return settings.getBoolValue("settings/buttons_by_pos", false); }
-		void SetButtonsByPosition(bool enabled) { settings.setValue("settings/buttons_by_pos", enabled); }
+        bool GetStartMicUnmuted() const { return startMicUnmuted; }
+        void SetStartMicUnmuted(bool startMicUnmuted) { this->startMicUnmuted = startMicUnmuted; }
 
-		bool GetStartMicUnmuted() const          { return settings.getBoolValue("settings/start_mic_unmuted", false); }
-		void SetStartMicUnmuted(bool unmuted) { return settings.setValue("settings/start_mic_unmuted", unmuted); }
+        float GetHapticOverride() const { return hapticOverride; }
+        void SetHapticOverride(float hapticOverride) { this->hapticOverride = hapticOverride; }
 
-		float GetHapticOverride() const 			{ return settings.getFloatValue("settings/haptic_override", 1.0); }
-		void SetHapticOverride(float override)	{ settings.setValue("settings/haptic_override", override); }
-
-		ChiakiVideoResolutionPreset GetResolutionLocalPS4() const;
-		ChiakiVideoResolutionPreset GetResolutionRemotePS4() const;
-		ChiakiVideoResolutionPreset GetResolutionLocalPS5() const;
-		ChiakiVideoResolutionPreset GetResolutionRemotePS5() const;
-		void SetResolutionLocalPS4(ChiakiVideoResolutionPreset resolution);
-		void SetResolutionRemotePS4(ChiakiVideoResolutionPreset resolution);
-		void SetResolutionLocalPS5(ChiakiVideoResolutionPreset resolution);
-		void SetResolutionRemotePS5(ChiakiVideoResolutionPreset resolution);
+        ChiakiVideoResolutionPreset GetResolutionLocalPS4() const { return resolutionLocalPS4; }
+        ChiakiVideoResolutionPreset GetResolutionRemotePS4() const { return resolutionRemotePS4; }
+		ChiakiVideoResolutionPreset GetResolutionLocalPS5() const { return resolutionLocalPS5; }
+		ChiakiVideoResolutionPreset GetResolutionRemotePS5() const { return resolutionRemotePS5; }
+		void SetResolutionLocalPS4(ChiakiVideoResolutionPreset resolutionLocalPS4) { this->resolutionLocalPS4 = resolutionLocalPS4; }
+		void SetResolutionRemotePS4(ChiakiVideoResolutionPreset resolutionRemotePS4) { this->resolutionRemotePS4 = resolutionRemotePS4; }
+		void SetResolutionLocalPS5(ChiakiVideoResolutionPreset resolutionLocalPS5) { this->resolutionLocalPS5 = resolutionLocalPS5; }
+		void SetResolutionRemotePS5(ChiakiVideoResolutionPreset resolutionRemotePS5) { this->resolutionRemotePS5 = resolutionRemotePS5; }
 
 		/**
 		 * @return 0 if set to "automatic"
 		 */
-		ChiakiVideoFPSPreset GetFPSLocalPS4() const;
-		ChiakiVideoFPSPreset GetFPSRemotePS4() const;
-		ChiakiVideoFPSPreset GetFPSLocalPS5() const;
-		ChiakiVideoFPSPreset GetFPSRemotePS5() const;
-		void SetFPSLocalPS4(ChiakiVideoFPSPreset fps);
-		void SetFPSRemotePS4(ChiakiVideoFPSPreset fps);
-		void SetFPSLocalPS5(ChiakiVideoFPSPreset fps);
-		void SetFPSRemotePS5(ChiakiVideoFPSPreset fps);
+		ChiakiVideoFPSPreset GetFPSLocalPS4() const { return fpsLocalPS4; }
+		ChiakiVideoFPSPreset GetFPSRemotePS4() const { return fpsRemotePS4; }
+		ChiakiVideoFPSPreset GetFPSLocalPS5() const { return fpsLocalPS5; }
+		ChiakiVideoFPSPreset GetFPSRemotePS5() const { return fpsRemotePS5; }
+		void SetFPSLocalPS4(ChiakiVideoFPSPreset fpsLocalPS4) { this->fpsLocalPS4 = fpsLocalPS4; };
+		void SetFPSRemotePS4(ChiakiVideoFPSPreset fpsRemotePS4) { this->fpsRemotePS4 = fpsRemotePS4; };
+		void SetFPSLocalPS5(ChiakiVideoFPSPreset fpsLocalPS5) { this->fpsLocalPS5 = fpsLocalPS5; };
+		void SetFPSRemotePS5(ChiakiVideoFPSPreset fpsRemotePS5) { this->fpsRemotePS5 = fpsRemotePS5; };
 
-		unsigned int GetBitrateLocalPS4() const;
-		unsigned int GetBitrateRemotePS4() const;
-		unsigned int GetBitrateLocalPS5() const;
-		unsigned int GetBitrateRemotePS5() const;
-		void SetBitrateLocalPS4(unsigned int bitrate);
-		void SetBitrateRemotePS4(unsigned int bitrate);
-		void SetBitrateLocalPS5(unsigned int bitrate);
-		void SetBitrateRemotePS5(unsigned int bitrate);
+		unsigned int GetBitrateLocalPS4() const { return bitrateLocalPS4; }
+		unsigned int GetBitrateRemotePS4() const { return bitrateRemotePS4; }
+		unsigned int GetBitrateLocalPS5() const { return bitrateLocalPS5; }
+		unsigned int GetBitrateRemotePS5() const { return bitrateRemotePS5; }
+		void SetBitrateLocalPS4(unsigned int bitrateLocalPS4) { this->bitrateLocalPS4 = bitrateLocalPS4; }
+		void SetBitrateRemotePS4(unsigned int bitrateRemotePS4) { this->bitrateRemotePS4 = bitrateRemotePS4; }
+		void SetBitrateLocalPS5(unsigned int bitrateLocalPS5) { this->bitrateLocalPS5 = bitrateLocalPS5; }
+		void SetBitrateRemotePS5(unsigned int bitrateRemotePS5) { this->bitrateRemotePS5 = bitrateRemotePS5; }
 
-		ChiakiCodec GetCodecPS4() const;
-		ChiakiCodec GetCodecLocalPS5() const;
-		ChiakiCodec GetCodecRemotePS5() const;
-		void SetCodecPS4(ChiakiCodec codec);
-		void SetCodecLocalPS5(ChiakiCodec codec);
-		void SetCodecRemotePS5(ChiakiCodec codec);
+		ChiakiCodec GetCodecPS4() const { return codecPS4; }
+		ChiakiCodec GetCodecLocalPS5() const { return codecLocalPS5; }
+		ChiakiCodec GetCodecRemotePS5() const { return codecRemotePS5; }
+		void SetCodecPS4(ChiakiCodec codecPS4) { this->codecPS4 = codecPS4; }
+		void SetCodecLocalPS5(ChiakiCodec codecLocalPS5) { this->codecLocalPS5 = codecLocalPS5; }
+		void SetCodecRemotePS5(ChiakiCodec codecRemotePS5) { this->codecRemotePS5 = codecRemotePS5; }
 
-		int GetDisplayTargetContrast() const;
-		void SetDisplayTargetContrast(int contrast);
+		int GetDisplayTargetContrast() const { return displayTargetContrast; }
+		void SetDisplayTargetContrast(int displayTargetContrast) { this->displayTargetContrast = displayTargetContrast; }
 
-		int GetDisplayTargetPeak() const;
-		void SetDisplayTargetPeak(int peak);
+		int GetDisplayTargetPeak() const { return displayTargetPeak; }
+		void SetDisplayTargetPeak(int displayTargetPeak) { this->displayTargetPeak = displayTargetPeak; }
 
-		int GetDisplayTargetTrc() const;
-		void SetDisplayTargetTrc(int trc);
+		int GetDisplayTargetTrc() const { return displayTargetTrc; }
+		void SetDisplayTargetTrc(int displayTargetTrc) { this->displayTargetTrc = displayTargetTrc; }
 
-		int GetDisplayTargetPrim() const;
-		void SetDisplayTargetPrim(int prim);
+		int GetDisplayTargetPrim() const { return displayTargetPrim; }
+		void SetDisplayTargetPrim(int displayTargetPrim) { this->displayTargetPrim = displayTargetPrim; }
 
-		Decoder GetDecoder() const;
-		void SetDecoder(Decoder decoder);
+        Decoder GetDecoder() const { return decoder; }
+        void SetDecoder(Decoder decoder) { this->decoder = decoder; }
 
-		std::string GetHardwareDecoder() const;
-		void SetHardwareDecoder(const std::string &hw_decoder);
+        std::string GetHardwareDecoder() const { return hardwareDecoder; };
+        void SetHardwareDecoder(const std::string hardwareDecoder) { this->hardwareDecoder = hardwareDecoder; };
 
-		WindowType GetWindowType() const;
-		void SetWindowType(WindowType type);
+        float GetPacketLossMax() const { return packetLossMax;}
+        void SetPacketLossMax(float packetLossMax) { this->packetLossMax = packetLossMax; }
 
-		uint GetCustomResolutionWidth() const;
-		void SetCustomResolutionWidth(uint width);
+        int GetAudioVolume() const { return audioVolume; }
+        void SetAudioVolume(int audioVolume) { this->audioVolume = audioVolume; }
 
-		uint GetCustomResolutionHeight() const;
-		void SetCustomResolutionHeight(uint length);
+        unsigned int GetAudioBufferSizeDefault() const { return 9600; }
 
-		PlaceboPreset GetPlaceboPreset() const;
-		void SetPlaceboPreset(PlaceboPreset preset);
+        /**
+         * @return 0 if set to "automatic"
+         */
+        unsigned int GetAudioBufferSizeRaw() const { return audioBufferSize; }
 
-		float GetZoomFactor() const;
-		void SetZoomFactor(float factor);
-
-		float GetPacketLossMax() const;
-		void SetPacketLossMax(float factor);
-
-        int GetAudioVolume() const;
-		void SetAudioVolume(int volume);
-
-		unsigned int GetAudioBufferSizeDefault() const;
-
-		/**
-		 * @return 0 if set to "automatic"
-		 */
-		unsigned int GetAudioBufferSizeRaw() const;
-
-		/**
+        /**
 		 * @return actual size to be used, default value if GetAudioBufferSizeRaw() would return 0
 		 */
 		unsigned int GetAudioBufferSize() const;
-		void SetAudioBufferSize(unsigned int size);
+		void SetAudioBufferSize(unsigned int size) { audioBufferSize = size; }
 		
-		std::string GetAudioOutDevice() const;
-		void SetAudioOutDevice(std::string device_name);
+		std::string GetAudioOutDevice() const { return audioOutDevice; }
+		void SetAudioOutDevice(std::string audioOutDevice) { audioOutDevice = audioOutDevice; }
 
-		std::string GetAudioInDevice() const;
-		void SetAudioInDevice(std::string device_name);
+		std::string GetAudioInDevice() const { return audioInDevice; }
+        void SetAudioInDevice(std::string audioInDevice) { audioInDevice = audioInDevice; }
 
-		uint GetWifiDroppedNotif() const;
-		void SetWifiDroppedNotif(uint percent);
+        std::string GetPsnAuthToken() const { return psnAuthToken; }
+        void SetPsnAuthToken(std::string psnAuthToken) { this->psnAuthToken = psnAuthToken; }
 
-		std::string GetPsnAuthToken() const;
-		void SetPsnAuthToken(std::string auth_token);
+        bool GetDpadTouchEnabled() const { return dpadTouchEnabled; }
+        void SetDpadTouchEnabled(bool dpadTouchEnabled) { this->dpadTouchEnabled = dpadTouchEnabled; }
 
-		std::string GetPsnRefreshToken() const;
-		void SetPsnRefreshToken(std::string refresh_token);
+		uint16_t GetDpadTouchIncrement() const { return dpadTouchIncrement; }
+        void SetDpadTouchIncrement(uint16_t dpadTouchIncrement) { dpadTouchIncrement = dpadTouchIncrement; }
 
-		std::string GetPsnAuthTokenExpiry() const;
-		void SetPsnAuthTokenExpiry(std::string expiry_date);
+		unsigned int GetDpadTouchShortcut1() const { return dpadTouchShortcut1; }
+		void SetDpadTouchShortcut1(unsigned int dpadTouchShortcut1) { dpadTouchShortcut1 = dpadTouchShortcut1; }
 
-		std::string GetCurrentProfile() const;
-		void SetCurrentProfile(std::string profile);
+		unsigned int GetDpadTouchShortcut2() const { return dpadTouchShortcut2; }
+		void SetDpadTouchShortcut2(unsigned int dpadTouchShortcut2) { dpadTouchShortcut2 = dpadTouchShortcut2; }
 
-		bool GetDpadTouchEnabled() const;
-		void SetDpadTouchEnabled(bool enabled);
+		unsigned int GetDpadTouchShortcut3() const { return dpadTouchShortcut3; }
+		void SetDpadTouchShortcut3(unsigned int dpadTouchShortcut3) { dpadTouchShortcut3 = dpadTouchShortcut3; }
 
-		uint16_t GetDpadTouchIncrement() const;
-		void SetDpadTouchIncrement(uint16_t increment);
+		unsigned int GetDpadTouchShortcut4() const { return dpadTouchShortcut4; }
+		void SetDpadTouchShortcut4(unsigned int dpadTouchShortcut4) { dpadTouchShortcut4 = dpadTouchShortcut4; }
 
-		uint GetDpadTouchShortcut1() const;
-		void SetDpadTouchShortcut1(uint button);
+		std::string GetPsnAccountId() const { return psnAccountId; }
+        void SetPsnAccountId(std::string psnAccountId) { this->psnAccountId = psnAccountId; }
 
-		uint GetDpadTouchShortcut2() const;
-		void SetDpadTouchShortcut2(uint button);
-
-		uint GetDpadTouchShortcut3() const;
-		void SetDpadTouchShortcut3(uint button);
-
-		uint GetDpadTouchShortcut4() const;
-		void SetDpadTouchShortcut4(uint button);
-
-		bool GetStreamMenuEnabled() const;
-		void SetStreamMenuEnabled(bool enabled);
-
-		uint GetStreamMenuShortcut1() const;
-		void SetStreamMenuShortcut1(uint button);
-
-		uint GetStreamMenuShortcut2() const;
-		void SetStreamMenuShortcut2(uint button);
-
-		uint GetStreamMenuShortcut3() const;
-		void SetStreamMenuShortcut3(uint button);
-
-		uint GetStreamMenuShortcut4() const;
-		void SetStreamMenuShortcut4(uint button);
-
-		void DeleteProfile(std::string profile);
-
-		std::string GetPsnAccountId() const;
-		void SetPsnAccountId(std::string account_id);
-
-		std::string GetTimeFormat() const     { return time_format; }
-		void ClearKeyMapping();
-
-		ChiakiConnectVideoProfile GetVideoProfileLocalPS4();
+        ChiakiConnectVideoProfile GetVideoProfileLocalPS4();
 		ChiakiConnectVideoProfile GetVideoProfileRemotePS4();
 		ChiakiConnectVideoProfile GetVideoProfileLocalPS5();
 		ChiakiConnectVideoProfile GetVideoProfileRemotePS5();
 
-		DisconnectAction GetDisconnectAction();
-		void SetDisconnectAction(DisconnectAction action);
-
-		SuspendAction GetSuspendAction();
-		void SetSuspendAction(SuspendAction action);
-
-		PlaceboUpscaler GetPlaceboUpscaler() const;
-		void SetPlaceboUpscaler(PlaceboUpscaler upscaler);
-
-		PlaceboUpscaler GetPlaceboPlaneUpscaler() const;
-		void SetPlaceboPlaneUpscaler(PlaceboUpscaler upscaler);
-		
-		PlaceboDownscaler GetPlaceboDownscaler() const;
-		void SetPlaceboDownscaler(PlaceboDownscaler downscaler);
-
-		PlaceboDownscaler GetPlaceboPlaneDownscaler() const;
-		void SetPlaceboPlaneDownscaler(PlaceboDownscaler downscaler);
-
-		PlaceboFrameMixer GetPlaceboFrameMixer() const;
-		void SetPlaceboFrameMixer(PlaceboFrameMixer frame_mixer);
-
-		float GetPlaceboAntiringingStrength() const;
-		void SetPlaceboAntiringingStrength(float strength);
-
-		bool GetPlaceboDebandEnabled() const;
-		void SetPlaceboDebandEnabled(bool enabled);
-
-		PlaceboDebandPreset GetPlaceboDebandPreset() const;
-		void SetPlaceboDebandPreset(PlaceboDebandPreset preset);
-
-		int GetPlaceboDebandIterations() const;
-		void SetPlaceboDebandIterations(int iterations);
-
-		float GetPlaceboDebandThreshold() const;
-		void SetPlaceboDebandThreshold(float threshold);
-
-		float GetPlaceboDebandRadius() const;
-		void SetPlaceboDebandRadius(float radius);
-		
-		float GetPlaceboDebandGrain() const;
-		void SetPlaceboDebandGrain(float grain);
-		
-		bool GetPlaceboSigmoidEnabled() const;
-		void SetPlaceboSigmoidEnabled(bool enabled);
-
-		PlaceboSigmoidPreset GetPlaceboSigmoidPreset() const;
-		void SetPlaceboSigmoidPreset(PlaceboSigmoidPreset preset);
-		
-		float GetPlaceboSigmoidCenter() const;
-		void SetPlaceboSigmoidCenter(float center);
-
-		float GetPlaceboSigmoidSlope() const;
-		void SetPlaceboSigmoidSlope(float slope);
-
-		bool GetPlaceboColorAdjustmentEnabled() const;
-		void SetPlaceboColorAdjustmentEnabled(bool enabled);
-
-		PlaceboColorAdjustmentPreset GetPlaceboColorAdjustmentPreset() const;
-		void SetPlaceboColorAdjustmentPreset(PlaceboColorAdjustmentPreset preset);
-
-		float GetPlaceboColorAdjustmentBrightness() const;
-		void SetPlaceboColorAdjustmentBrightness(float brightness);
-
-		float GetPlaceboColorAdjustmentContrast() const;
-		void SetPlaceboColorAdjustmentContrast(float contrast);
-
-		float GetPlaceboColorAdjustmentSaturation() const;
-		void SetPlaceboColorAdjustmentSaturation(float saturation);
-
-		float GetPlaceboColorAdjustmentHue() const;
-		void SetPlaceboColorAdjustmentHue(float hue);
-
-		float GetPlaceboColorAdjustmentGamma() const;
-		void SetPlaceboColorAdjustmentGamma(float gamma);
-
-		float GetPlaceboColorAdjustmentTemperature() const;
-		void SetPlaceboColorAdjustmentTemperature(float temperature);
-
-		bool GetPlaceboPeakDetectionEnabled() const;
-		void SetPlaceboPeakDetectionEnabled(bool enabled);
-
-		PlaceboPeakDetectionPreset GetPlaceboPeakDetectionPreset() const;
-		void SetPlaceboPeakDetectionPreset(PlaceboPeakDetectionPreset preset);
-
-		float GetPlaceboPeakDetectionPeakSmoothingPeriod() const;
-		void SetPlaceboPeakDetectionPeakSmoothingPeriod(float period);
-
-		float GetPlaceboPeakDetectionSceneThresholdLow() const;
-		void SetPlaceboPeakDetectionSceneThresholdLow(float threshold_low);
-
-		float GetPlaceboPeakDetectionSceneThresholdHigh() const;
-		void SetPlaceboPeakDetectionSceneThresholdHigh(float threshold_high);
-
-		float GetPlaceboPeakDetectionPeakPercentile() const;
-		void SetPlaceboPeakDetectionPeakPercentile(float percentile);
-
-		float GetPlaceboPeakDetectionBlackCutoff() const;
-		void SetPlaceboPeakDetectionBlackCutoff(float cutoff);
-
-		bool GetPlaceboPeakDetectionAllowDelayedPeak() const;
-		void SetPlaceboPeakDetectionAllowDelayedPeak(bool allowed);
-
-		bool GetPlaceboColorMappingEnabled() const;
-		void SetPlaceboColorMappingEnabled(bool enabled);
-
-		PlaceboColorMappingPreset GetPlaceboColorMappingPreset() const;
-		void SetPlaceboColorMappingPreset(PlaceboColorMappingPreset preset);
-
-		PlaceboGamutMappingFunction GetPlaceboGamutMappingFunction() const;
-		void SetPlaceboGamutMappingFunction(PlaceboGamutMappingFunction function);
-
-		float GetPlaceboGamutMappingPerceptualDeadzone() const;
-		void SetPlaceboGamutMappingPerceptualDeadzone(float deadzone);
-
-		float GetPlaceboGamutMappingPerceptualStrength() const;
-		void SetPlaceboGamutMappingPerceptualStrength(float strength);
-
-		float GetPlaceboGamutMappingColorimetricGamma() const;
-		void SetPlaceboGamutMappingColorimetricGamma(float gamma);
-
-		float GetPlaceboGamutMappingSoftClipKnee() const;
-		void SetPlaceboGamutMappingSoftClipKnee(float knee);
-
-		float GetPlaceboGamutMappingSoftClipDesat() const;
-		void SetPlaceboGamutMappingSoftClipDesat(float strength);
-
-		int GetPlaceboGamutMappingLut3dSizeI() const;
-		void SetPlaceboGamutMappingLut3dSizeI(int size);
-
-		int GetPlaceboGamutMappingLut3dSizeC() const;
-		void SetPlaceboGamutMappingLut3dSizeC(int size);
-
-		int GetPlaceboGamutMappingLut3dSizeH() const;
-		void SetPlaceboGamutMappingLut3dSizeH(int size);
-
-		bool GetPlaceboGamutMappingLut3dTricubicEnabled() const;
-		void SetPlaceboGamutMappingLut3dTricubicEnabled(bool enabled);
-
-		bool GetPlaceboGamutMappingGamutExpansionEnabled() const;
-		void SetPlaceboGamutMappingGamutExpansionEnabled(bool enabled);
-
-		PlaceboToneMappingFunction GetPlaceboToneMappingFunction() const;
-		void SetPlaceboToneMappingFunction(PlaceboToneMappingFunction function);
-
-		float GetPlaceboToneMappingKneeAdaptation() const;
-		void SetPlaceboToneMappingKneeAdaptation(float knee);
-
-		float GetPlaceboToneMappingKneeMinimum() const;
-		void SetPlaceboToneMappingKneeMinimum(float knee);
-
-		float GetPlaceboToneMappingKneeMaximum() const;
-		void SetPlaceboToneMappingKneeMaximum(float knee);
-
-		float GetPlaceboToneMappingKneeDefault() const;
-		void SetPlaceboToneMappingKneeDefault(float knee);
-
-		float GetPlaceboToneMappingKneeOffset() const;
-		void SetPlaceboToneMappingKneeOffset(float knee);
-
-		float GetPlaceboToneMappingSlopeTuning() const;
-		void SetPlaceboToneMappingSlopeTuning(float slope);
-
-		float GetPlaceboToneMappingSlopeOffset() const;
-		void SetPlaceboToneMappingSlopeOffset(float offset);
-
-		float GetPlaceboToneMappingSplineContrast() const;
-		void SetPlaceboToneMappingSplineContrast(float contrast);
-
-		float GetPlaceboToneMappingReinhardContrast() const;
-		void SetPlaceboToneMappingReinhardContrast(float contrast);
-
-		float GetPlaceboToneMappingLinearKnee() const;
-		void SetPlaceboToneMappingLinearKnee(float knee);
-
-		float GetPlaceboToneMappingExposure() const;
-		void SetPlaceboToneMappingExposure(float exposure);
-
-		bool GetPlaceboToneMappingInverseToneMappingEnabled() const;
-		void SetPlaceboToneMappingInverseToneMappingEnabled(bool enabled);
-
-		PlaceboToneMappingMetadata GetPlaceboToneMappingMetadata() const;
-		void SetPlaceboToneMappingMetadata(PlaceboToneMappingMetadata function);
-
-		int GetPlaceboToneMappingToneLutSize() const;
-		void SetPlaceboToneMappingToneLutSize(int size);
-
-		float GetPlaceboToneMappingContrastRecovery() const;
-		void SetPlaceboToneMappingContrastRecovery(float recovery);
-
-		float GetPlaceboToneMappingContrastSmoothness() const;
-		void SetPlaceboToneMappingContrastSmoothness(float smoothness);
-
-		void PlaceboSettingsApply();
-
-		std::list<RegisteredHost> GetRegisteredHosts() const
-        {
-            std::list<RegisteredHost> registered_host_list{registered_hosts.size()};
-            for (auto &host : registered_hosts) {
-                registered_host_list.push_back(host.second);
-            }
-            return registered_host_list;
-        }
-        void AddRegisteredHost(const RegisteredHost &host);
-		void RemoveRegisteredHost(const HostMAC &mac);
-        bool GetRegisteredHostRegistered(const HostMAC &mac) const { return registered_hosts.find(mac) != registered_hosts.end(); }
-        RegisteredHost GetRegisteredHost(const HostMAC &mac) const	{ return registered_hosts.at(mac); }
-		std::list<HiddenHost> GetHiddenHosts() const
-        {
-            std::list<HiddenHost> hidden_host_list{hidden_hosts.size()};
-            for (auto &host : hidden_hosts)
-            {
-                hidden_host_list.push_back(host.second);
-            }
-            return hidden_host_list;
-        }
-        void AddHiddenHost(const HiddenHost &host);
-		void RemoveHiddenHost(const HostMAC &mac);
-        bool GetHiddenHostHidden(const HostMAC &mac) const { return hidden_hosts.find(mac) != hidden_hosts.end(); }
-        HiddenHost GetHiddenHost(const HostMAC &mac) const 			{ return hidden_hosts.at(mac); }
-        bool GetNicknameRegisteredHostRegistered(const std::string &nickname) const { return nickname_registered_hosts.find(nickname) != nickname_registered_hosts.end(); }
-        RegisteredHost GetNicknameRegisteredHost(const std::string &nickname) const { return nickname_registered_hosts.at(nickname); }
-		size_t GetPS4RegisteredHostsRegistered() const { return ps4s_registered; }
-		std::list<std::string> GetProfiles() const                          { return profiles; }
-
-		std::list<ManualHost> GetManualHosts() const
-        {
-            std::list<ManualHost> manual_host_list{manual_hosts.size()};
-            for (auto &host : manual_hosts)
-            {
-                manual_host_list.push_back(host.second);
-            }
-            return manual_host_list;
-        }
-        int SetManualHost(const ManualHost &host);
-		void RemoveManualHost(int id);
-        bool GetManualHostExists(int id) { return manual_hosts.find(id) != manual_hosts.end(); }
-        ManualHost GetManualHost(int id) const						{ return manual_hosts.at(id); }
-
-		std::map<std::string, std::string> GetControllerMappings() const		{ return controller_mappings; }
-		void SetControllerMapping(const std::string &vidpid, const std::string &mapping);
-		void RemoveControllerMapping(const std::string &vidpid);
-
-		static std::string GetChiakiControllerButtonName(int);
-		void SetControllerButtonMapping(int, int);
-		std::map<int, int> GetControllerMapping();
+        static std::string GetChiakiControllerButtonName(int);
+        void SetControllerButtonMapping(int, int);
+        std::map<int, int> GetControllerMapping();
 		std::map<int, int> GetControllerMappingForDecoding();
 
-		std::function<void()> RegisteredHostsUpdated;
+		/*std::function<void()> RegisteredHostsUpdated;
 		std::function<void()> HiddenHostsUpdated;
 		std::function<void()> ManualHostsUpdated;
 		std::function<void()> ControllerMappingsUpdated;
 		std::function<void()> CurrentProfileChanged;
 		std::function<void()> ProfilesUpdated;
-		std::function<void()> PlaceboSettingsUpdated;
+		std::function<void()> PlaceboSettingsUpdated;*/
 };
 
 #endif // CHIAKI_PY_SETTINGS_H

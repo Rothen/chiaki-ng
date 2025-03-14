@@ -76,10 +76,10 @@ struct StreamSessionConnectInfo
 	std::string psn_token;
 	std::string psn_account_id;
 	uint16_t dpad_touch_increment;
-	uint dpad_touch_shortcut1;
-	uint dpad_touch_shortcut2;
-	uint dpad_touch_shortcut3;
-	uint dpad_touch_shortcut4;
+	unsigned int dpad_touch_shortcut1;
+	unsigned int dpad_touch_shortcut2;
+	unsigned int dpad_touch_shortcut3;
+	unsigned int dpad_touch_shortcut4;
 
 	StreamSessionConnectInfo() {}
 	StreamSessionConnectInfo(
@@ -141,10 +141,10 @@ class StreamSession
 		float haptic_override;
 		bool dpad_regular;
 		bool dpad_regular_touch_switched;
-		uint dpad_touch_shortcut1;
-		uint dpad_touch_shortcut2;
-		uint dpad_touch_shortcut3;
-		uint dpad_touch_shortcut4;
+		unsigned int dpad_touch_shortcut1;
+		unsigned int dpad_touch_shortcut2;
+		unsigned int dpad_touch_shortcut3;
+		unsigned int dpad_touch_shortcut4;
 		int8_t dpad_touch_id;
 		std::tuple<uint16_t, uint16_t> dpad_touch_value;
         std::atomic<bool> dpad_touch_running{true};
