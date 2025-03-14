@@ -1,6 +1,6 @@
 from chiaki_py import discover, ChiakiLog, LogLevel, Target, Settings, StreamSessionConnectInfo, StreamSession
 
-log = ChiakiLog(level=LogLevel.INFO)
+log = ChiakiLog(level=LogLevel.VERBOSE)
 host = "192.168.42.43"
 regist_key = "b02d1ceb"  # 2955746539
 nickname = "PS5-083"
