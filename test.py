@@ -29,7 +29,7 @@ connect_info: StreamSessionConnectInfo = StreamSessionConnectInfo(
     host=host,
     nickname=nickname,
     regist_key=regist_key,
-    morning=morning,
+    morning=morning_ints,
     initial_login_pin=initial_login_pin,
     duid=duid,
     auto_regist=auto_regist,
@@ -43,6 +43,7 @@ print(connect_info)
 stream_session: StreamSession = StreamSession(connect_info)
 
 print(stream_session)
+stream_session.start()
 # log.set_callback(lambda level, message: print(f"[{level}] {message}"))
 # print(wakeup(log, host, registKey, ps5))
 # print(discover(log, host, discover_timout))

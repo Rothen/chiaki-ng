@@ -303,7 +303,7 @@ PYBIND11_MODULE(chiaki_py, m)
     py::class_<StreamSessionConnectInfo>(m, "StreamSessionConnectInfo")
         .def(py::init<>())
         .def(py::init<Settings *, ChiakiTarget, std::string, std::string, std::string &,
-                      std::string &, std::string, std::string, bool, bool, bool, bool>(),
+                      std::vector<uint8_t> &, std::string, std::string, bool, bool, bool, bool>(),
              py::arg("settings"),
              py::arg("target"),
              py::arg("host"),

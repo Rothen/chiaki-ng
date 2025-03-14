@@ -86,7 +86,7 @@ struct StreamSessionConnectInfo
         std::string host,
         std::string nickname,
         std::string &regist_key,
-        std::string &morning,
+        std::vector<uint8_t> &morning,
         std::string initial_login_pin,
         std::string duid,
         bool auto_regist,

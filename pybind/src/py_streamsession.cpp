@@ -68,7 +68,7 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
     std::string host,
     std::string nickname,
     std::string &regist_key,
-    std::string &morning,
+    std::vector<uint8_t> &morning,
     std::string initial_login_pin,
     std::string duid,
     bool auto_regist,
@@ -95,12 +95,12 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
     this->target = target;
     this->nickname = std::move(nickname);
     this->host = std::move(host);
-    
-    std::memset(this->regist_key, 0, CHIAKI_SESSION_AUTH_SIZE); // Zero out first
+
+    std::memset(this->regist_key, '\0', CHIAKI_SESSION_AUTH_SIZE); // Zero out first
     std::strncpy(this->regist_key, regist_key.c_str(), CHIAKI_SESSION_AUTH_SIZE - 1);
 
     std::memset(this->morning, 0, 0x10);
-    std::memcpy(this->morning, morning.data(), std::min<std::size_t>(morning.size(), size_t(0x10)));
+    std::memcpy(this->morning, morning.data(), morning.size());
 
     this->initial_login_pin = std::move(initial_login_pin);
     audio_buffer_size = settings->GetAudioBufferSize();
