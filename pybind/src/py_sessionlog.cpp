@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 
-#include <sessionlog.h>
+#include "py_sessionlog.h"
 #include <chiaki/log.h>
 #include <chrono>
 #include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <algorithm>
-#include <boost/filesystem.hpp>
+// #include <boost/filesystem.hpp>
 
 static void LogCb(ChiakiLogLevel level, const char *msg, void *user);
 
@@ -79,10 +79,10 @@ static void LogCb(ChiakiLogLevel level, const char *msg, void *user)
 
 std::string GetLogBaseDir()
 {
-    std::string base_dir = boost::filesystem::temp_directory_path().string();
+    /*std::string base_dir = boost::filesystem::temp_directory_path().string();
     std::string log_dir = base_dir + "/chiaki_logs";
-    boost::filesystem::create_directories(log_dir);
-    return log_dir;
+    boost::filesystem::create_directories(log_dir);*/
+    return "/chiaki_logs";
 }
 
 std::string CreateLogFilename()
@@ -100,7 +100,7 @@ std::string CreateLogFilename()
     std::string log_file = dir_str + "/" + filename.str();
 
     // Cleanup old logs
-    std::vector<boost::filesystem::directory_entry> log_files;
+    /*std::vector<boost::filesystem::directory_entry> log_files;
     for (const auto &entry : boost::filesystem::directory_iterator(dir_str))
     {
         if (entry.path().extension() == ".log")
@@ -115,7 +115,7 @@ std::string CreateLogFilename()
     {
         boost::filesystem::remove(log_files.back().path());
         log_files.pop_back();
-    }
+    }*/
 
     return log_file;
 }

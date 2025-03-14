@@ -1,8 +1,8 @@
 // SPDX - License - Identifier : LicenseRef - AGPL - 3.0 - only - OpenSSL
 
-#include <streamsession.h>
-#include <settings.h>
-#include <controllermanager.h>
+#include "py_streamsession.h"
+#include "py_settings.h"
+#include "py_controllermanager.h"
 
 #include <chiaki/base64.h>
 #include <chiaki/streamconnection.h>
@@ -578,10 +578,40 @@ void StreamSession::TriggerFfmpegFrameAvailable()
 class StreamSessionPrivate
 {
 public:
+    static void InitAudio(StreamSession *session, uint32_t channels, uint32_t rate)
+    {
+        // QMetaObject::invokeMethod(session, "InitAudio", Qt::ConnectionType::BlockingQueuedConnection, Q_ARG(unsigned int, channels), Q_ARG(unsigned int, rate));
+    }
+
+    static void InitMic(StreamSession *session, uint32_t channels, uint32_t rate)
+    {
+        // QMetaObject::invokeMethod(session, "InitMic", Qt::ConnectionType::QueuedConnection, Q_ARG(unsigned int, channels), Q_ARG(unsigned int, rate));
+    }
+
+    static void PushAudioFrame(StreamSession *session, int16_t *buf, size_t samples_count) { /*session->PushAudioFrame(buf, samples_count);*/ }
+    static void PushHapticsFrame(StreamSession *session, uint8_t *buf, size_t buf_size) { /*session->PushHapticsFrame(buf, buf_size);*/ }
     static void CantDisplayMessage(StreamSession *session, bool cant_display) { session->CantDisplayMessage(cant_display); }
     static void Event(StreamSession *session, ChiakiEvent *event) { session->Event(event); }
     static void TriggerFfmpegFrameAvailable(StreamSession *session) { session->TriggerFfmpegFrameAvailable(); }
 };
+
+static void AudioSettingsCb(uint32_t channels, uint32_t rate, void *user)
+{
+    auto session = reinterpret_cast<StreamSession *>(user);
+    StreamSessionPrivate::InitAudio(session, channels, rate);
+}
+
+static void AudioFrameCb(int16_t *buf, size_t samples_count, void *user)
+{
+    auto session = reinterpret_cast<StreamSession *>(user);
+    StreamSessionPrivate::PushAudioFrame(session, buf, samples_count);
+}
+
+static void HapticsFrameCb(uint8_t *buf, size_t buf_size, void *user)
+{
+    auto session = reinterpret_cast<StreamSession *>(user);
+    StreamSessionPrivate::PushHapticsFrame(session, buf, buf_size);
+}
 
 static void CantDisplayCb(void *user, bool cant_display)
 {

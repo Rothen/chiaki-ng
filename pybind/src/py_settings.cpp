@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: LicenseRef-AGPL-3.0-only-OpenSSL
 
-#include "settings.h"
+#include "py_settings.h"
 
 #include <variant>
 #include <chiaki/config.h>
@@ -15,10 +15,10 @@ Settings::Settings() : rumbleHapticsIntensity(RumbleHapticsIntensity::Normal),
                        resolutionRemotePS4(CHIAKI_VIDEO_RESOLUTION_PRESET_720p),
                        resolutionLocalPS5(CHIAKI_VIDEO_RESOLUTION_PRESET_1080p),
                        resolutionRemotePS5(CHIAKI_VIDEO_RESOLUTION_PRESET_720p),
-                       fpsLocalPS4(fps_default),
-                       fpsRemotePS4(fps_default),
-                       fpsLocalPS5(fps_default),
-                       fpsRemotePS5(fps_default),
+                       fpsLocalPS4(CHIAKI_VIDEO_FPS_PRESET_60),
+                       fpsRemotePS4(CHIAKI_VIDEO_FPS_PRESET_60),
+                       fpsLocalPS5(CHIAKI_VIDEO_FPS_PRESET_60),
+                       fpsRemotePS5(CHIAKI_VIDEO_FPS_PRESET_60),
                        bitrateLocalPS4(0),
                        bitrateRemotePS4(0),
                        bitrateLocalPS5(0),

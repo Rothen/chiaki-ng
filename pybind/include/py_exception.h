@@ -4,7 +4,6 @@
 #define CHIAKI_PY_EXCEPTION_H
 
 #include <exception>
-
 #include <string>
 
 class Exception : public std::exception

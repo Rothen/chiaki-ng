@@ -16,6 +16,24 @@
 #include <functional>
 #include <vector>
 
+enum class ControllerButtonExt
+{
+    // must not overlap with ChiakiControllerButton and ChiakiControllerAnalogButton
+    ANALOG_STICK_LEFT_X_UP = (1 << 18),
+    ANALOG_STICK_LEFT_X_DOWN = (1 << 19),
+    ANALOG_STICK_LEFT_Y_UP = (1 << 20),
+    ANALOG_STICK_LEFT_Y_DOWN = (1 << 21),
+    ANALOG_STICK_RIGHT_X_UP = (1 << 22),
+    ANALOG_STICK_RIGHT_X_DOWN = (1 << 23),
+    ANALOG_STICK_RIGHT_Y_UP = (1 << 24),
+    ANALOG_STICK_RIGHT_Y_DOWN = (1 << 25),
+    ANALOG_STICK_LEFT_X = (1 << 26),
+    ANALOG_STICK_LEFT_Y = (1 << 27),
+    ANALOG_STICK_RIGHT_X = (1 << 28),
+    ANALOG_STICK_RIGHT_Y = (1 << 29),
+    MISC1 = (1 << 30),
+};
+
 enum class RumbleHapticsIntensity
 {
 	Off,
@@ -186,16 +204,16 @@ class Settings
         unsigned int GetAudioBufferSizeRaw() const { return audioBufferSize; }
 
         /**
-		 * @return actual size to be used, default value if GetAudioBufferSizeRaw() would return 0
-		 */
-		unsigned int GetAudioBufferSize() const;
-		void SetAudioBufferSize(unsigned int size) { audioBufferSize = size; }
-		
-		std::string GetAudioOutDevice() const { return audioOutDevice; }
-		void SetAudioOutDevice(std::string audioOutDevice) { audioOutDevice = audioOutDevice; }
+         * @return actual audioBufferSize to be used, default value if GetAudioBufferSizeRaw() would return 0
+         */
+        unsigned int GetAudioBufferSize() const;
+        void SetAudioBufferSize(unsigned int audioBufferSize) { this->audioBufferSize = audioBufferSize; }
+
+        std::string GetAudioOutDevice() const { return audioOutDevice; }
+		void SetAudioOutDevice(std::string audioOutDevice) { this->audioOutDevice = audioOutDevice; }
 
 		std::string GetAudioInDevice() const { return audioInDevice; }
-        void SetAudioInDevice(std::string audioInDevice) { audioInDevice = audioInDevice; }
+        void SetAudioInDevice(std::string audioInDevice) { this->audioInDevice = audioInDevice; }
 
         std::string GetPsnAuthToken() const { return psnAuthToken; }
         void SetPsnAuthToken(std::string psnAuthToken) { this->psnAuthToken = psnAuthToken; }
@@ -204,19 +222,19 @@ class Settings
         void SetDpadTouchEnabled(bool dpadTouchEnabled) { this->dpadTouchEnabled = dpadTouchEnabled; }
 
 		uint16_t GetDpadTouchIncrement() const { return dpadTouchIncrement; }
-        void SetDpadTouchIncrement(uint16_t dpadTouchIncrement) { dpadTouchIncrement = dpadTouchIncrement; }
+        void SetDpadTouchIncrement(uint16_t dpadTouchIncrement) { this->dpadTouchIncrement = dpadTouchIncrement; }
 
 		unsigned int GetDpadTouchShortcut1() const { return dpadTouchShortcut1; }
-		void SetDpadTouchShortcut1(unsigned int dpadTouchShortcut1) { dpadTouchShortcut1 = dpadTouchShortcut1; }
+		void SetDpadTouchShortcut1(unsigned int dpadTouchShortcut1) { this->dpadTouchShortcut1 = dpadTouchShortcut1; }
 
 		unsigned int GetDpadTouchShortcut2() const { return dpadTouchShortcut2; }
-		void SetDpadTouchShortcut2(unsigned int dpadTouchShortcut2) { dpadTouchShortcut2 = dpadTouchShortcut2; }
+		void SetDpadTouchShortcut2(unsigned int dpadTouchShortcut2) { this->dpadTouchShortcut2 = dpadTouchShortcut2; }
 
 		unsigned int GetDpadTouchShortcut3() const { return dpadTouchShortcut3; }
-		void SetDpadTouchShortcut3(unsigned int dpadTouchShortcut3) { dpadTouchShortcut3 = dpadTouchShortcut3; }
+		void SetDpadTouchShortcut3(unsigned int dpadTouchShortcut3) { this->dpadTouchShortcut3 = dpadTouchShortcut3; }
 
 		unsigned int GetDpadTouchShortcut4() const { return dpadTouchShortcut4; }
-		void SetDpadTouchShortcut4(unsigned int dpadTouchShortcut4) { dpadTouchShortcut4 = dpadTouchShortcut4; }
+		void SetDpadTouchShortcut4(unsigned int dpadTouchShortcut4) { this->dpadTouchShortcut4 = dpadTouchShortcut4; }
 
 		std::string GetPsnAccountId() const { return psnAccountId; }
         void SetPsnAccountId(std::string psnAccountId) { this->psnAccountId = psnAccountId; }

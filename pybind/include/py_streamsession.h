@@ -17,12 +17,12 @@
 #include <chrono>
 #include <atomic>
 
-#include "exception.h"
-#include "sessionlog.h"
-#include "controllermanager.h"
-#include "settings.h"
-#include "timer.h"
-#include "elapsed_timer.h"
+#include "py_exception.h"
+#include "py_sessionlog.h"
+#include "py_controllermanager.h"
+#include "py_settings.h"
+#include "py_timer.h"
+#include "py_elapsed_timer.h"
 
 class KeyEvent {
     public:
@@ -31,8 +31,6 @@ class KeyEvent {
         enum Type { KeyPress, KeyRelease };
         Type type() { return KeyPress; }
 };
-
-// class Settings;
 
 class ChiakiException: public Exception
 {
