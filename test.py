@@ -1,10 +1,48 @@
-from chiaki_py import ChiakiLog, discover, ChiakiLogLevel
+from chiaki_py import discover, ChiakiLog, LogLevel, Target, Settings, StreamSessionConnectInfo, StreamSession
 
-log = ChiakiLog(level=ChiakiLogLevel.INFO)
+log = ChiakiLog(level=LogLevel.INFO)
+host = "192.168.42.43"
+regist_key = "b02d1ceb"  # 2955746539
+nickname = "PS5-083"
+ps5Id = "78c881a8214a"
+morning = "ª?RÿGC\\x1d/,ðñA\\x10öy³"
+morning_x = 0x000001b142182250
+initial_login_pin = ""  # None
+duid = "" # None
+auto_regist = False
+fullscreen = False
+zoom = False
+stretch = False
+ps5 = True
+discover_timout = 2000
 
-def my_log_callback(level: int, message: str):
-    print(f"[{level}] {message}")
+regist_key_list: list[int] = [a for a in map(ord, regist_key)]
+morning_list: list[int] = [a for a in map(ord, morning)]
 
-log.set_callback(my_log_callback)
+print(regist_key_list)
+print(morning_list)
 
-print(discover(log, "192.168.42.43", 2000))
+settings: Settings = Settings()
+connect_info: StreamSessionConnectInfo = StreamSessionConnectInfo(
+    settings=settings,
+    target=Target.PS5_1,
+    host=host,
+    nickname=nickname,
+    regist_key=regist_key,
+    morning=morning,
+    initial_login_pin=initial_login_pin,
+    duid=duid,
+    auto_regist=auto_regist,
+    fullscreen=fullscreen,
+    zoom=zoom,
+    stretch=stretch
+)
+
+print(connect_info)
+
+stream_session: StreamSession = StreamSession(connect_info)
+
+print(stream_session)
+# log.set_callback(lambda level, message: print(f"[{level}] {message}"))
+# print(wakeup(log, host, registKey, ps5))
+# print(discover(log, host, discover_timout))

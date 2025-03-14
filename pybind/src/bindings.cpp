@@ -3,7 +3,7 @@
 #include "py_streamsession.h"
 #include "py_settings.h"
 
-// #include <chiaki-pybind.h>
+#include <chiaki-pybind.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
@@ -55,11 +55,12 @@ public:
 
 ChiakiErrorCode chiaki_pybind_discover_wrapper(PyChiakiLog &log, const std::string &host, const float timeout)
 {
-    return ChiakiErrorCode::CHIAKI_ERR_SUCCESS; // return chiaki_pybind_discover(log.get_raw_log(), host.c_str(), timeout);
+    return chiaki_pybind_discover(log.get_raw_log(), host.c_str(), timeout);
 }
 
-ChiakiErrorCode chiaki_pybind_wakeup_wrapper(ChiakiLog *log, const std::string &host, const std::string &registkey, bool ps5){
-    return ChiakiErrorCode::CHIAKI_ERR_SUCCESS; // return chiaki_pybind_wakeup(log, host.c_str(), registkey.c_str(), ps5);
+ChiakiErrorCode chiaki_pybind_wakeup_wrapper(PyChiakiLog &log, const std::string &host, const std::string &registkey, bool ps5)
+{
+    return chiaki_pybind_wakeup(log.get_raw_log(), host.c_str(), registkey.c_str(), ps5);
 }
 
 PYBIND11_MODULE(chiaki_py, m)
@@ -180,127 +181,144 @@ PYBIND11_MODULE(chiaki_py, m)
 
     py::class_<Settings>(m, "Settings")
         .def(py::init<>())
-        .def("GetAudioVideoDisabled", &Settings::GetAudioVideoDisabled)
-        .def("GetLogVerbose", &Settings::GetLogVerbose)
-        .def("GetLogLevelMask", &Settings::GetLogLevelMask)
-        .def("GetRumbleHapticsIntensity", &Settings::GetRumbleHapticsIntensity)
-        .def("SetRumbleHapticsIntensity", &Settings::SetRumbleHapticsIntensity, py::arg("rumbleHapticsIntensity"), "Set the rumble haptics intensity.")
-        .def("GetButtonsByPosition", &Settings::GetButtonsByPosition)
-        .def("SetButtonsByPosition", &Settings::SetButtonsByPosition, py::arg("buttonsByPosition"), "Set the buttons by position.")
-        .def("GetStartMicUnmuted", &Settings::GetStartMicUnmuted)
-        .def("SetStartMicUnmuted", &Settings::SetStartMicUnmuted, py::arg("startMicUnmuted"), "Set the start mic unmuted.")
-        .def("GetHapticOverride", &Settings::GetHapticOverride)
-        .def("SetHapticOverride", &Settings::SetHapticOverride, py::arg("hapticOverride"), "Set the haptic override.")
-        .def("GetResolutionLocalPS4", &Settings::GetResolutionLocalPS4)
-        .def("GetResolutionRemotePS4", &Settings::GetResolutionRemotePS4)
-        .def("GetResolutionLocalPS5", &Settings::GetResolutionLocalPS5)
-        .def("GetResolutionRemotePS5", &Settings::GetResolutionRemotePS5)
-        .def("SetResolutionLocalPS4", &Settings::SetResolutionLocalPS4, py::arg("resolutionLocalPS4"), "Set the local PS4 resolution.")
-        .def("SetResolutionRemotePS4", &Settings::SetResolutionRemotePS4, py::arg("resolutionRemotePS4"), "Set the remote PS4 resolution.")
-        .def("SetResolutionLocalPS5", &Settings::SetResolutionLocalPS5, py::arg("resolutionLocalPS5"), "Set the local PS5 resolution.")
-        .def("SetResolutionRemotePS5", &Settings::SetResolutionRemotePS5, py::arg("resolutionRemotePS5"), "Set the remote PS5 resolution.")
-        .def("GetFPSLocalPS4", &Settings::GetFPSLocalPS4)
-        .def("GetFPSRemotePS4", &Settings::GetFPSRemotePS4)
-        .def("GetFPSLocalPS5", &Settings::GetFPSLocalPS5)
-        .def("GetFPSRemotePS5", &Settings::GetFPSRemotePS5)
-        .def("SetFPSLocalPS4", &Settings::SetFPSLocalPS4, py::arg("fpsLocalPS4"), "Set the local PS4 FPS.")
-        .def("SetFPSRemotePS4", &Settings::SetFPSRemotePS4, py::arg("fpsRemotePS4"), "Set the remote PS4 FPS.")
-        .def("SetFPSLocalPS5", &Settings::SetFPSLocalPS5, py::arg("fpsLocalPS5"), "Set the local PS5 FPS.")
-        .def("SetFPSRemotePS5", &Settings::SetFPSRemotePS5, py::arg("fpsRemotePS5"), "Set the remote PS5 FPS.")
-        .def("GetBitrateLocalPS4", &Settings::GetBitrateLocalPS4)
-        .def("GetBitrateRemotePS4", &Settings::GetBitrateRemotePS4)
-        .def("GetBitrateLocalPS5", &Settings::GetBitrateLocalPS5)
-        .def("GetBitrateRemotePS5", &Settings::GetBitrateRemotePS5)
-        .def("SetBitrateLocalPS4", &Settings::SetBitrateLocalPS4, py::arg("bitrateLocalPS4"), "Set the local PS4 bitrate.")
-        .def("SetBitrateRemotePS4", &Settings::SetBitrateRemotePS4, py::arg("bitrateRemotePS4"), "Set the remote PS4 bitrate.")
-        .def("SetBitrateLocalPS5", &Settings::SetBitrateLocalPS5, py::arg("bitrateLocalPS5"), "Set the local PS5 bitrate.")
-        .def("SetBitrateRemotePS5", &Settings::SetBitrateRemotePS5, py::arg("bitrateRemotePS5"), "Set the remote PS5 bitrate.")
-        .def("GetCodecPS4", &Settings::GetCodecPS4)
-        .def("GetCodecLocalPS5", &Settings::GetCodecLocalPS5)
-        .def("GetCodecRemotePS5", &Settings::GetCodecRemotePS5)
-        .def("SetCodecPS4", &Settings::SetCodecPS4, py::arg("codecPS4"), "Set the PS4 codec.")
-        .def("SetCodecLocalPS5", &Settings::SetCodecLocalPS5, py::arg("codecLocalPS5"), "Set the local PS5 codec.")
-        .def("SetCodecRemotePS5", &Settings::SetCodecRemotePS5, py::arg("codecRemotePS5"), "Set the remote PS5 codec.")
-        .def("GetDisplayTargetContrast", &Settings::GetDisplayTargetContrast)
-        .def("SetDisplayTargetContrast", &Settings::SetDisplayTargetContrast, py::arg("displayTargetContrast"), "Set the display target contrast.")
-        .def("GetDisplayTargetPeak", &Settings::GetDisplayTargetPeak)
-        .def("SetDisplayTargetPeak", &Settings::SetDisplayTargetPeak, py::arg("displayTargetPeak"), "Set the display target peak.")
-        .def("GetDisplayTargetTrc", &Settings::GetDisplayTargetTrc)
-        .def("SetDisplayTargetTrc", &Settings::SetDisplayTargetTrc, py::arg("displayTargetTrc"), "Set the display target TRC.")
-        .def("GetDisplayTargetPrim", &Settings::GetDisplayTargetPrim)
-        .def("SetDisplayTargetPrim", &Settings::SetDisplayTargetPrim, py::arg("displayTargetPrim"), "Set the display target PRIM.")
-        .def("GetDecoder", &Settings::GetDecoder)
-        .def("SetDecoder", &Settings::SetDecoder, py::arg("decoder"), "Set the decoder.")
-        .def("GetHardwareDecoder", &Settings::GetHardwareDecoder)
-        .def("SetHardwareDecoder", &Settings::SetHardwareDecoder, py::arg("hardwareDecoder"), "Set the hardware decoder.")
-        .def("GetPacketLossMax", &Settings::GetPacketLossMax)
-        .def("SetPacketLossMax", &Settings::SetPacketLossMax, py::arg("packetLossMax"), "Set the packet loss max.")
-        .def("GetAudioVolume", &Settings::GetAudioVolume)
-        .def("SetAudioVolume", &Settings::SetAudioVolume, py::arg("audioVolume"), "Set the audio volume.")
-        .def("GetAudioBufferSizeDefault", &Settings::GetAudioBufferSizeDefault)
-        .def("GetAudioBufferSizeRaw", &Settings::GetAudioBufferSizeRaw)
-        .def("GetAudioBufferSize", &Settings::GetAudioBufferSize)
-        .def("SetAudioBufferSize", &Settings::SetAudioBufferSize, py::arg("audioBufferSize"), "Set the audio buffer size.")
-        .def("GetAudioOutDevice", &Settings::GetAudioOutDevice)
-        .def("SetAudioOutDevice", &Settings::SetAudioOutDevice, py::arg("audioOutDevice"), "Set the audio out device.")
-        .def("GetAudioInDevice", &Settings::GetAudioInDevice)
-        .def("SetAudioInDevice", &Settings::SetAudioInDevice, py::arg("audioInDevice"), "Set the audio in device.")
-        .def("GetPsnAuthToken", &Settings::GetPsnAuthToken)
-        .def("SetPsnAuthToken", &Settings::SetPsnAuthToken, py::arg("psnAuthToken"), "Set the PSN auth token.")
-        .def("GetDpadTouchEnabled", &Settings::GetDpadTouchEnabled)
-        .def("SetDpadTouchEnabled", &Settings::SetDpadTouchEnabled, py::arg("dpadTouchEnabled"), "Set the D-pad touch enabled.")
-        .def("GetDpadTouchIncrement", &Settings::GetDpadTouchIncrement)
-        .def("SetDpadTouchIncrement", &Settings::SetDpadTouchIncrement, py::arg("dpadTouchIncrement"), "Set the D-pad touch increment.")
-        .def("GetDpadTouchShortcut1", &Settings::GetDpadTouchShortcut1)
-        .def("SetDpadTouchShortcut1", &Settings::SetDpadTouchShortcut1, py::arg("dpadTouchShortcut1"), "Set the D-pad touch shortcut 1.")
-        .def("GetDpadTouchShortcut2", &Settings::GetDpadTouchShortcut2)
-        .def("SetDpadTouchShortcut2", &Settings::SetDpadTouchShortcut2, py::arg("dpadTouchShortcut2"), "Set the D-pad touch shortcut 2.")
-        .def("GetDpadTouchShortcut3", &Settings::GetDpadTouchShortcut3)
-        .def("SetDpadTouchShortcut3", &Settings::SetDpadTouchShortcut3, py::arg("dpadTouchShortcut3"), "Set the D-pad touch shortcut 3.")
-        .def("GetDpadTouchShortcut4", &Settings::GetDpadTouchShortcut4)
-        .def("SetDpadTouchShortcut4", &Settings::SetDpadTouchShortcut4, py::arg("dpadTouchShortcut4"), "Set the D-pad touch shortcut 4.")
-        .def("GetPsnAccountId", &Settings::GetPsnAccountId)
-        .def("SetPsnAccountId", &Settings::SetPsnAccountId, py::arg("psnAccountId"), "Set the PSN account ID.")
-        .def("GetVideoProfileLocalPS4", &Settings::GetVideoProfileLocalPS4)
-        .def("GetVideoProfileRemotePS4", &Settings::GetVideoProfileRemotePS4)
-        .def("GetVideoProfileLocalPS5", &Settings::GetVideoProfileLocalPS5)
-        .def("GetVideoProfileRemotePS5", &Settings::GetVideoProfileRemotePS5)
-        .def("GetChiakiControllerButtonName", &Settings::GetChiakiControllerButtonName)
-        .def("SetControllerButtonMapping", &Settings::SetControllerButtonMapping, py::arg("chiaki_button"), py::arg("key"), "Set the controller button mapping.")
-        .def("GetControllerMapping", &Settings::GetControllerMapping)
-        .def("GetControllerMappingForDecoding", &Settings::GetControllerMappingForDecoding);
+        .def("get_audio_video_disabled", &Settings::GetAudioVideoDisabled, "Get the audio/video disabled.")
+        .def("get_log_verbose", &Settings::GetLogVerbose, "Get the log verbose.")
+        .def("get_log_level_mask", &Settings::GetLogLevelMask, "Get the log level mask.")
+        .def("get_rumble_haptics_intensity", &Settings::GetRumbleHapticsIntensity, "Get the rumble haptics intensity.")
+        .def("set_rumble_haptics_intensity", &Settings::SetRumbleHapticsIntensity, py::arg("rumble_haptics_intensity"), "Set the rumble haptics intensity.")
+        .def("get_buttons_by_position", &Settings::GetButtonsByPosition, "Get the buttons by position.")
+        .def("set_buttons_by_position", &Settings::SetButtonsByPosition, py::arg("buttons_by_position"), "Set the buttons by position.")
+        .def("get_start_mic_unmuted", &Settings::GetStartMicUnmuted, "Get the start mic unmuted.")
+        .def("set_start_mic_unmuted", &Settings::SetStartMicUnmuted, py::arg("start_mic_unmuted"), "Set the start mic unmuted.")
+        .def("get_haptic_override", &Settings::GetHapticOverride, "Get the haptic override.")
+        .def("set_haptic_override", &Settings::SetHapticOverride, py::arg("haptic_override"), "Set the haptic override.")
+        .def("get_resolution_local_ps4", &Settings::GetResolutionLocalPS4, "Get the local PS4 resolution.")
+        .def("get_resolution_remote_ps4", &Settings::GetResolutionRemotePS4, "Get the remote PS4 resolution.")
+        .def("get_resolution_local_ps5", &Settings::GetResolutionLocalPS5, "Get the local PS5 resolution.")
+        .def("get_resolution_remote_ps5", &Settings::GetResolutionRemotePS5, "Get the remote PS5 resolution.")
+        .def("set_resolution_local_ps4", &Settings::SetResolutionLocalPS4, py::arg("resolution_local_ps4"), "Set the local PS4 resolution.")
+        .def("set_resolution_remote_ps4", &Settings::SetResolutionRemotePS4, py::arg("resolution_remote_ps4"), "Set the remote PS4 resolution.")
+        .def("set_resolution_local_ps5", &Settings::SetResolutionLocalPS5, py::arg("resolution_local_ps5"), "Set the local PS5 resolution.")
+        .def("set_resolution_remote_ps5", &Settings::SetResolutionRemotePS5, py::arg("resolution_remote_ps5"), "Set the remote PS5 resolution.")
+        .def("get_fpslocal_ps4", &Settings::GetFPSLocalPS4, "Get the local PS4 FPS.")
+        .def("get_fpsremote_ps4", &Settings::GetFPSRemotePS4, "Get the remote PS4 FPS.")
+        .def("get_fpslocal_ps5", &Settings::GetFPSLocalPS5, "Get the local PS5 FPS.")
+        .def("get_fpsremote_ps5", &Settings::GetFPSRemotePS5, "Get the remote PS5 FPS.")
+        .def("set_fpslocal_ps4", &Settings::SetFPSLocalPS4, py::arg("fps_local_ps4"), "Set the local PS4 FPS.")
+        .def("set_fpsremote_ps4", &Settings::SetFPSRemotePS4, py::arg("fps_remote_ps4"), "Set the remote PS4 FPS.")
+        .def("set_fpslocal_ps5", &Settings::SetFPSLocalPS5, py::arg("fps_local_ps5"), "Set the local PS5 FPS.")
+        .def("set_fpsremote_ps5", &Settings::SetFPSRemotePS5, py::arg("fps_remote_ps5"), "Set the remote PS5 FPS.")
+        .def("get_bitrate_local_ps4", &Settings::GetBitrateLocalPS4, "Get the local PS4 bitrate.")
+        .def("get_bitrate_remote_ps4", &Settings::GetBitrateRemotePS4, "Get the remote PS4 bitrate.")
+        .def("get_bitrate_local_ps5", &Settings::GetBitrateLocalPS5, "Get the local PS5 bitrate.")
+        .def("get_bitrate_remote_ps5", &Settings::GetBitrateRemotePS5, "Get the remote PS5 bitrate.")
+        .def("set_bitrate_local_ps4", &Settings::SetBitrateLocalPS4, py::arg("bitrate_local_ps4"), "Set the local PS4 bitrate.")
+        .def("set_bitrate_remote_ps4", &Settings::SetBitrateRemotePS4, py::arg("bitrate_remote_ps4"), "Set the remote PS4 bitrate.")
+        .def("set_bitrate_local_ps5", &Settings::SetBitrateLocalPS5, py::arg("bitrate_local_ps5"), "Set the local PS5 bitrate.")
+        .def("set_bitrate_remote_ps5", &Settings::SetBitrateRemotePS5, py::arg("bitrate_remote_ps5"), "Set the remote PS5 bitrate.")
+        .def("get_codec_ps4", &Settings::GetCodecPS4, "Get the PS4 codec.")
+        .def("get_codec_local_ps5", &Settings::GetCodecLocalPS5, "Get the local PS5 codec.")
+        .def("get_codec_remote_ps5", &Settings::GetCodecRemotePS5, "Get the remote PS5 codec.")
+        .def("set_codec_ps4", &Settings::SetCodecPS4, py::arg("codec_ps4"), "Set the PS4 codec.")
+        .def("set_codec_local_ps5", &Settings::SetCodecLocalPS5, py::arg("codec_local_ps5"), "Set the local PS5 codec.")
+        .def("set_codec_remote_ps5", &Settings::SetCodecRemotePS5, py::arg("codec_remote_ps5"), "Set the remote PS5 codec.")
+        .def("get_display_target_contrast", &Settings::GetDisplayTargetContrast, "Get the display target contrast.")
+        .def("set_display_target_contrast", &Settings::SetDisplayTargetContrast, py::arg("display_target_contrast"), "Set the display target contrast.")
+        .def("get_display_target_peak", &Settings::GetDisplayTargetPeak, "Get the display target peak.")
+        .def("set_display_target_peak", &Settings::SetDisplayTargetPeak, py::arg("display_target_peak"), "Set the display target peak.")
+        .def("get_display_target_trc", &Settings::GetDisplayTargetTrc, "Get the display target TRC.")
+        .def("set_display_target_trc", &Settings::SetDisplayTargetTrc, py::arg("display_target_trc"), "Set the display target TRC.")
+        .def("get_display_target_prim", &Settings::GetDisplayTargetPrim, "Get the display target PRIM.")
+        .def("set_display_target_prim", &Settings::SetDisplayTargetPrim, py::arg("display_target_prim"), "Set the display target PRIM.")
+        .def("get_decoder", &Settings::GetDecoder, "Get the decoder.")
+        .def("set_decoder", &Settings::SetDecoder, py::arg("decoder"), "Set the decoder.")
+        .def("get_hardware_decoder", &Settings::GetHardwareDecoder, "Get the hardware decoder.")
+        .def("set_hardware_decoder", &Settings::SetHardwareDecoder, py::arg("hardware_decoder"), "Set the hardware decoder.")
+        .def("get_packet_loss_max", &Settings::GetPacketLossMax, "Get the packet loss max.")
+        .def("set_packet_loss_max", &Settings::SetPacketLossMax, py::arg("packet_loss_max"), "Set the packet loss max.")
+        .def("get_audio_volume", &Settings::GetAudioVolume, "Get the audio volume.")
+        .def("set_audio_volume", &Settings::SetAudioVolume, py::arg("audio_volume"), "Set the audio volume.")
+        .def("get_audio_buffer_size_default", &Settings::GetAudioBufferSizeDefault, "Get the audio buffer size default.")
+        .def("get_audio_buffer_size_raw", &Settings::GetAudioBufferSizeRaw, "Get the audio buffer size raw.")
+        .def("get_audio_buffer_size", &Settings::GetAudioBufferSize, "Get the audio buffer size.")
+        .def("set_audio_buffer_size", &Settings::SetAudioBufferSize, py::arg("audio_buffer_size"), "Set the audio buffer size.")
+        .def("get_audio_out_device", &Settings::GetAudioOutDevice, "Get the audio out device.")
+        .def("set_audio_out_device", &Settings::SetAudioOutDevice, py::arg("audio_out_device"), "Set the audio out device.")
+        .def("get_audio_in_device", &Settings::GetAudioInDevice, "Get the audio in device.")
+        .def("set_audio_in_device", &Settings::SetAudioInDevice, py::arg("audio_in_device"), "Set the audio in device.")
+        .def("get_psn_auth_token", &Settings::GetPsnAuthToken, "Get the PSN auth token.")
+        .def("set_psn_auth_token", &Settings::SetPsnAuthToken, py::arg("psn_auth_token"), "Set the PSN auth token.")
+        .def("get_dpad_touch_enabled", &Settings::GetDpadTouchEnabled, "Get the D-pad touch enabled.")
+        .def("set_dpad_touch_enabled", &Settings::SetDpadTouchEnabled, py::arg("dpad_touch_enabled"), "Set the D-pad touch enabled.")
+        .def("get_dpad_touch_increment", &Settings::GetDpadTouchIncrement, "Get the D-pad touch increment.")
+        .def("set_dpad_touch_increment", &Settings::SetDpadTouchIncrement, py::arg("dpad_touch_increment"), "Set the D-pad touch increment.")
+        .def("get_dpad_touch_shortcut1", &Settings::GetDpadTouchShortcut1, "Get the D-pad touch shortcut 1.")
+        .def("set_dpad_touch_shortcut1", &Settings::SetDpadTouchShortcut1, py::arg("dpad_touch_shortcut1"), "Set the D-pad touch shortcut 1.")
+        .def("get_dpad_touch_shortcut2", &Settings::GetDpadTouchShortcut2, "Get the D-pad touch shortcut 2.")
+        .def("set_dpad_touch_shortcut2", &Settings::SetDpadTouchShortcut2, py::arg("dpad_touch_shortcut2"), "Set the D-pad touch shortcut 2.")
+        .def("get_dpad_touch_shortcut3", &Settings::GetDpadTouchShortcut3, "Get the D-pad touch shortcut 3.")
+        .def("set_dpad_touch_shortcut3", &Settings::SetDpadTouchShortcut3, py::arg("dpad_touch_shortcut3"), "Set the D-pad touch shortcut 3.")
+        .def("get_dpad_touch_shortcut4", &Settings::GetDpadTouchShortcut4, "Get the D-pad touch shortcut 4.")
+        .def("set_dpad_touch_shortcut4", &Settings::SetDpadTouchShortcut4, py::arg("dpad_touch_shortcut4"), "Set the D-pad touch shortcut 4.")
+        .def("get_psn_account_id", &Settings::GetPsnAccountId, "Get the PSN account ID.")
+        .def("set_psn_account_id", &Settings::SetPsnAccountId, py::arg("psn_account_id"), "Set the PSN account ID.")
+        .def("get_video_profile_local_ps4", &Settings::GetVideoProfileLocalPS4, "Get the local PS4 video profile.")
+        .def("get_video_profile_remote_ps4", &Settings::GetVideoProfileRemotePS4, "Get the remote PS4 video profile.")
+        .def("get_video_profile_local_ps5", &Settings::GetVideoProfileLocalPS5, "Get the local PS5 video profile.")
+        .def("get_video_profile_remote_ps5", &Settings::GetVideoProfileRemotePS5, "Get the remote PS5 video profile.")
+        .def_static("get_chiaki_controller_button_name", &Settings::GetChiakiControllerButtonName, py::arg("chiaki_button"), "Get the Chiaki controller button name.")
+        .def("set_controller_button_mapping", &Settings::SetControllerButtonMapping, py::arg("chiaki_button"), py::arg("key"), "Set the controller button mapping.")
+        .def("get_controller_mapping", &Settings::GetControllerMapping, "Get the controller mapping.")
+        .def("get_controller_mapping_for_decoding", &Settings::GetControllerMappingForDecoding, "Get the controller mapping for decoding.")
+        .def("__repr__", [](const Settings &s)
+            {
+                std::ostringstream repr;
+                repr << "<Settings("
+                    << "logVerbose=" << (s.GetLogVerbose() ? "True" : "False") << ", "
+                    << "logLevelMask=" << s.GetLogLevelMask() << ", "
+                    << "rumbleHapticsIntensity=" << static_cast<int>(s.GetRumbleHapticsIntensity()) << ", "
+                    << "buttonsByPosition=" << (s.GetButtonsByPosition() ? "True" : "False") << ", "
+                    << "startMicUnmuted=" << (s.GetStartMicUnmuted() ? "True" : "False") << ", "
+                    << "hapticOverride=" << s.GetHapticOverride() << ", "
+                    << "resolutionLocalPS4=" << static_cast<int>(s.GetResolutionLocalPS4()) << ", "
+                    << "resolutionRemotePS4=" << static_cast<int>(s.GetResolutionRemotePS4()) << ", "
+                    << "fpsLocalPS4=" << static_cast<int>(s.GetFPSLocalPS4()) << ", "
+                    << "fpsRemotePS4=" << static_cast<int>(s.GetFPSRemotePS4()) << ", "
+                    << "bitrateLocalPS4=" << s.GetBitrateLocalPS4() << ", "
+                    << "bitrateRemotePS4=" << s.GetBitrateRemotePS4() << ", "
+                    << "codecPS4=" << static_cast<int>(s.GetCodecPS4()) << ", "
+                    << "decoder=" << static_cast<int>(s.GetDecoder()) << ", "
+                    << "hardwareDecoder='" << s.GetHardwareDecoder() << "', "
+                    << "packetLossMax=" << s.GetPacketLossMax() << ", "
+                    << "audioVolume=" << s.GetAudioVolume() << ", "
+                    << "audioBufferSize=" << s.GetAudioBufferSize() << ", "
+                    << "audioOutDevice='" << s.GetAudioOutDevice() << "', "
+                    << "audioInDevice='" << s.GetAudioInDevice() << "', "
+                    << "psnAccountId='" << s.GetPsnAccountId() << "'"
+                    << ")>";
+                return repr.str();
+            }
+        );
 
-    /*py::class_<StreamSessionConnectInfo>(m, "StreamSessionConnectInfo")
+    py::class_<StreamSessionConnectInfo>(m, "StreamSessionConnectInfo")
         .def(py::init<>())
-        .def(py::init<Settings *, ChiakiTarget, std::string, std::string, std::vector<uint8_t>,
-                      std::vector<uint8_t>, std::string, std::string, bool, bool, bool, bool>())
-        .def_readwrite("settings", &StreamSessionConnectInfo::settings)
-        .def_readwrite("key_map", &StreamSessionConnectInfo::key_map)
-        .def_readwrite("decoder", &StreamSessionConnectInfo::decoder)
-        .def_readwrite("hw_decoder", &StreamSessionConnectInfo::hw_decoder)
-        .def_readwrite("audio_out_device", &StreamSessionConnectInfo::audio_out_device)
-        .def_readwrite("audio_in_device", &StreamSessionConnectInfo::audio_in_device)
-        .def_readwrite("log_level_mask", &StreamSessionConnectInfo::log_level_mask)
-        .def_readwrite("log_file", &StreamSessionConnectInfo::log_file)
-        .def_readwrite("target", &StreamSessionConnectInfo::target)
-        .def_readwrite("host", &StreamSessionConnectInfo::host)
-        .def_readwrite("nickname", &StreamSessionConnectInfo::nickname)
-        .def_readwrite("regist_key", &StreamSessionConnectInfo::regist_key)
-        .def_readwrite("morning", &StreamSessionConnectInfo::morning)
-        .def_readwrite("initial_login_pin", &StreamSessionConnectInfo::initial_login_pin)
-        .def_readwrite("video_profile", &StreamSessionConnectInfo::video_profile)
-        .def_readwrite("packet_loss_max", &StreamSessionConnectInfo::packet_loss_max)
-        .def_readwrite("audio_buffer_size", &StreamSessionConnectInfo::audio_buffer_size)
-        .def_readwrite("audio_volume", &StreamSessionConnectInfo::audio_volume)
-        .def_readwrite("fullscreen", &StreamSessionConnectInfo::fullscreen)
-        .def_readwrite("zoom", &StreamSessionConnectInfo::zoom)
-        .def_readwrite("stretch", &StreamSessionConnectInfo::stretch)
-        .def_readwrite("enable_keyboard", &StreamSessionConnectInfo::enable_keyboard)
-        .def_readwrite("enable_dualsense", &StreamSessionConnectInfo::enable_dualsense)
-        .def_readwrite("auto_regist", &StreamSessionConnectInfo::auto_regist);
+        .def(py::init<Settings *, ChiakiTarget, std::string, std::string, std::string &,
+                      std::string &, std::string, std::string, bool, bool, bool, bool>(),
+             py::arg("settings"),
+             py::arg("target"),
+             py::arg("host"),
+             py::arg("nickname"),
+             py::arg("regist_key"),
+             py::arg("morning"),
+             py::arg("initial_login_pin"),
+             py::arg("duid"),
+             py::arg("auto_regist"),
+             py::arg("fullscreen"),
+             py::arg("zoom"),
+             py::arg("stretch"));
 
     py::class_<StreamSession>(m, "StreamSession")
-        .def(py::init<const StreamSessionConnectInfo &>())
+        .def(py::init<const StreamSessionConnectInfo &>(), py::arg("connect_info"))
         .def("start", &StreamSession::Start)
         .def("stop", &StreamSession::Stop)
         .def("go_to_bed", &StreamSession::GoToBed)
@@ -313,5 +331,15 @@ PYBIND11_MODULE(chiaki_py, m)
         .def("get_average_packet_loss", &StreamSession::GetAveragePacketLoss)
         .def("get_muted", &StreamSession::GetMuted)
         .def("set_audio_volume", &StreamSession::SetAudioVolume)
-        .def("get_cant_display", &StreamSession::GetCantDisplay);*/
+        .def("get_cant_display", &StreamSession::GetCantDisplay)
+        .def_readwrite("ffmpeg_frame_available", &StreamSession::FfmpegFrameAvailable)
+        .def_readwrite("session_quit", &StreamSession::SessionQuit)
+        .def_readwrite("login_pin_requested", &StreamSession::LoginPINRequested)
+        .def_readwrite("data_holepunch_progress", &StreamSession::DataHolepunchProgress)
+        .def_readwrite("auto_regist_succeeded", &StreamSession::AutoRegistSucceeded)
+        .def_readwrite("nickname_received", &StreamSession::NicknameReceived)
+        .def_readwrite("connected_changed", &StreamSession::ConnectedChanged)
+        .def_readwrite("measured_bitrate_changed", &StreamSession::MeasuredBitrateChanged)
+        .def_readwrite("average_packet_loss_changed", &StreamSession::AveragePacketLossChanged)
+        .def_readwrite("cant_display_changed", &StreamSession::CantDisplayChanged);
 }

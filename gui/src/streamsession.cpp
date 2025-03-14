@@ -188,8 +188,9 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info, QObje
 	rumble_haptics_connected(false),
 	rumble_haptics_on(false)
 {
-	mic_buf.buf = nullptr;
-	connected = false;
+    auto test = connect_info.regist_key.constData();
+    mic_buf.buf = nullptr;
+    connected = false;
 	muted = true;
 	mic_connected = false;
 #ifdef Q_OS_MACOS

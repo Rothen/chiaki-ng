@@ -52,9 +52,9 @@ struct StreamSessionConnectInfo
 	ChiakiTarget target;
 	std::string host;
 	std::string nickname;
-	std::vector<uint8_t> regist_key;
-	std::vector<uint8_t> morning;
-	std::string initial_login_pin;
+    char regist_key[CHIAKI_SESSION_AUTH_SIZE]; // must be completely filled (pad with \0)
+    uint8_t morning[0x10];
+    std::string initial_login_pin;
 	ChiakiConnectVideoProfile video_profile;
 	double packet_loss_max;
 	unsigned int audio_buffer_size;
@@ -80,19 +80,19 @@ struct StreamSessionConnectInfo
 	unsigned int dpad_touch_shortcut4;
 
 	StreamSessionConnectInfo() {}
-	StreamSessionConnectInfo(
-			Settings *settings,
-			ChiakiTarget target,
-			std::string host,
-			std::string nickname,
-			std::vector<uint8_t> regist_key,
-			std::vector<uint8_t> morning,
-			std::string initial_login_pin,
-			std::string duid,
-			bool auto_regist,
-			bool fullscreen,
-			bool zoom,
-			bool stretch);
+    StreamSessionConnectInfo(
+        Settings *settings,
+        ChiakiTarget target,
+        std::string host,
+        std::string nickname,
+        std::string &regist_key,
+        std::string &morning,
+        std::string initial_login_pin,
+        std::string duid,
+        bool auto_regist,
+        bool fullscreen,
+        bool zoom,
+        bool stretch);
 };
 
 class StreamSession

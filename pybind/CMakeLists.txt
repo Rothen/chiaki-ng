@@ -1,3 +1,12 @@
+set(SOURCE
+    include/chiaki-pybind.h
+    src/py_discover.c
+    src/py_wakeup.c)
+
+add_library(chiaki-pybind-lib STATIC ${SOURCE})
+target_include_directories(chiaki-pybind-lib PUBLIC "include")
+target_link_libraries(chiaki-pybind-lib chiaki-lib)
+
 if(NOT DEPS_FOLDER)
     set(DEPS_FOLDER ${CMAKE_SOURCE_DIR}/deps)
 endif(NOT DEPS_FOLDER)
@@ -42,11 +51,18 @@ set(SOURCES
 pybind11_add_module(chiaki_py ${SOURCES})
 
 # Link against chiaki-lib
-target_link_libraries(chiaki_py PRIVATE chiaki-lib fmt::fmt)
+target_link_libraries(chiaki_py PRIVATE chiaki-pybind-lib chiaki-lib fmt::fmt)
 
 if(WIN32)
+    target_link_libraries(chiaki-pybind-lib ws2_32)
     target_link_libraries(chiaki_py PRIVATE wsock32 ws2_32 bcrypt iphlpapi)
 endif()
+
+add_custom_command(TARGET chiaki_py POST_BUILD
+    VERBATIM COMMAND python -c "import os; import sys; sys.path.insert(1, os.getcwd()); from pybind11_stubgen import main; import chiaki_py; sys.argv[0] = 'pybind11-stubgen'; sys.argv.append('--ignore-all-errors'); sys.argv.append('-o'); sys.argv.append('.'); sys.argv.append('chiaki_py'); main()" ||(exit 0)
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+    COMMENT "Creating stubs for MC3D-TRECSIM"
+)
 # set(SOURCE
 #     include/chiaki-pybind.h
 #     src/py_discover.c

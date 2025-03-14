@@ -67,8 +67,8 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
     ChiakiTarget target,
     std::string host,
     std::string nickname,
-    std::vector<uint8_t> regist_key,
-    std::vector<uint8_t> morning,
+    std::string &regist_key,
+    std::string &morning,
     std::string initial_login_pin,
     std::string duid,
     bool auto_regist,
@@ -95,8 +95,13 @@ StreamSessionConnectInfo::StreamSessionConnectInfo(
     this->target = target;
     this->nickname = std::move(nickname);
     this->host = std::move(host);
-    this->regist_key = std::move(regist_key);
-    this->morning = std::move(morning);
+    
+    std::memset(this->regist_key, 0, CHIAKI_SESSION_AUTH_SIZE); // Zero out first
+    std::strncpy(this->regist_key, regist_key.c_str(), CHIAKI_SESSION_AUTH_SIZE - 1);
+
+    std::memset(this->morning, 0, 0x10);
+    std::memcpy(this->morning, morning.data(), std::min<std::size_t>(morning.size(), size_t(0x10)));
+
     this->initial_login_pin = std::move(initial_login_pin);
     audio_buffer_size = settings->GetAudioBufferSize();
     this->fullscreen = fullscreen;
@@ -240,13 +245,13 @@ StreamSession::StreamSession(const StreamSessionConnectInfo &connect_info)
     haptic_override = connect_info.haptic_override;
     if (connect_info.duid.empty())
     {
-        if (connect_info.regist_key.size() != sizeof(chiaki_connect_info.regist_key))
-            throw ChiakiException("RegistKey invalid");
-        memcpy(chiaki_connect_info.regist_key, connect_info.regist_key.data(), sizeof(chiaki_connect_info.regist_key));
+        // if (connect_info.regist_key.size() != sizeof(chiaki_connect_info.regist_key))
+        //     throw ChiakiException("RegistKey invalid");
+        memcpy(chiaki_connect_info.regist_key, connect_info.regist_key, sizeof(chiaki_connect_info.regist_key));
 
-        if (connect_info.morning.size() != sizeof(chiaki_connect_info.morning))
-            throw ChiakiException("Morning invalid");
-        memcpy(chiaki_connect_info.morning, connect_info.morning.data(), sizeof(chiaki_connect_info.morning));
+        // if (connect_info.morning.size() != sizeof(chiaki_connect_info.morning))
+        //     throw ChiakiException("Morning invalid");
+        memcpy(chiaki_connect_info.morning, connect_info.morning, sizeof(chiaki_connect_info.morning));
     }
 
     if (chiaki_connect_info.ps5)

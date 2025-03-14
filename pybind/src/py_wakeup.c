@@ -7,13 +7,32 @@
 #include <string.h>
 #include <stdio.h>
 
-/*static struct argp_option options[] = {
-	{ "host", ARG_KEY_HOST, "Host", 0, "Host to send wakeup packet to", 0 },
-	{ "registkey", ARG_KEY_REGISTKEY, "RegistKey", 0, "Remote Play registration key (plaintext)", 0 },
-	{ "ps4", ARG_KEY_PS4, NULL, 0, "PlayStation 4", 0 },
-	{ "ps5", ARG_KEY_PS5, NULL, 0, "PlayStation 5 (default)", 0 },
-	{ 0 }
-};*/
+#ifdef _WIN32
+    #include <winsock2.h>
+    #include <ws2tcpip.h>
+    #include <windows.h>
+    #pragma comment(lib, "ws2_32.lib") // Link Winsock automatically
+#else
+    #include <netdb.h>
+    #include <netinet/in.h>
+#endif
+
+int initialize_winsock2()
+{
+    int result = 0;
+#ifdef _WIN32
+    WSADATA wsaData;
+    result = WSAStartup(MAKEWORD(2, 2), &wsaData);
+#endif
+    return result;
+}
+
+void cleanup_winsock2()
+{
+#ifdef _WIN32
+    WSACleanup();
+#endif
+}
 
 CHIAKI_EXPORT ChiakiErrorCode chiaki_pybind_wakeup(ChiakiLog *log, const char *host, const char *registkey, bool ps5)
 {
@@ -34,6 +53,9 @@ CHIAKI_EXPORT ChiakiErrorCode chiaki_pybind_wakeup(ChiakiLog *log, const char *h
     }
 
 	uint64_t credential = (uint64_t)strtoull(registkey, NULL, 16);
-
-	return chiaki_discovery_wakeup(log, NULL, host, credential, ps5);
+    fprintf(stdout, "Waking up %llu\n", credential);
+    initialize_winsock2();
+    ChiakiErrorCode res = chiaki_discovery_wakeup(log, NULL, host, credential, ps5);
+    cleanup_winsock2();
+    return res;
 }

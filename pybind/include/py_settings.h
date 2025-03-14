@@ -121,7 +121,7 @@ class Settings
 		ChiakiDisableAudioVideo GetAudioVideoDisabled() const { return audioVideoDisabled;  }
 
 		bool GetLogVerbose() const { return logVerbose; }
-		uint32_t GetLogLevelMask() { uint32_t mask = CHIAKI_LOG_ALL; if (!GetLogVerbose()) { mask &= ~CHIAKI_LOG_VERBOSE; } return mask; };
+		uint32_t GetLogLevelMask() const { uint32_t mask = CHIAKI_LOG_ALL; if (!GetLogVerbose()) { mask &= ~CHIAKI_LOG_VERBOSE; } return mask; };
 
         RumbleHapticsIntensity GetRumbleHapticsIntensity() const { return rumbleHapticsIntensity; };
         void SetRumbleHapticsIntensity(RumbleHapticsIntensity rumbleHapticsIntensity) { this->rumbleHapticsIntensity = rumbleHapticsIntensity; }
@@ -244,8 +244,8 @@ class Settings
 		ChiakiConnectVideoProfile GetVideoProfileLocalPS5();
 		ChiakiConnectVideoProfile GetVideoProfileRemotePS5();
 
-        static std::string GetChiakiControllerButtonName(int);
-        void SetControllerButtonMapping(int, int);
+        static std::string GetChiakiControllerButtonName(int button);
+        void SetControllerButtonMapping(int chiaki_button, int key);
         std::map<int, int> GetControllerMapping();
 		std::map<int, int> GetControllerMappingForDecoding();
 
