@@ -16,6 +16,14 @@ find_package(Python REQUIRED COMPONENTS Interpreter Development)
 find_package(Python3 REQUIRED COMPONENTS Interpreter Development)
 # find_package(Boost REQUIRED COMPONENTS filesystem)
 find_package(fmt REQUIRED)
+find_package(FFMPEG COMPONENTS avcodec avutil avformat swscale)
+
+# Ensure that CMake correctly finds FFmpeg
+message(STATUS "FFmpeg Dir: ${FFMPEG_DIR}")
+message(STATUS "FFmpeg Include Dirs: ${FFMPEG_INCLUDE_DIRS}")
+message(STATUS "FFmpeg Libraries: ${FFMPEG_LIBRARIES}")
+message(STATUS "FFmpeg Library dirs: ${FFMPEG_LIBRARY_DIRS}")
+
 
 set(PYBIND11_PYTHON_VERSION 3.11)
 include(FetchContent)
@@ -39,19 +47,30 @@ set(SOURCES
     include/py_settings.h
     include/py_streamsession.h
     include/py_timer.h
+    include/py_av_frame.h
     src/py_host.cpp
     src/py_controllermanager.cpp
     src/py_sessionlog.cpp
     src/py_settings.cpp
     src/py_streamsession.cpp
+    src/py_av_frame.cpp
     src/bindings.cpp
 )
 
 # Create the shared library (Python module)
 pybind11_add_module(chiaki_py ${SOURCES})
 
+set(FFMPEG_LIBRARIES
+    ${CMAKE_SOURCE_DIR}/deps/lib/avcodec.lib
+    ${CMAKE_SOURCE_DIR}/deps/lib/avformat.lib
+    ${CMAKE_SOURCE_DIR}/deps/lib/avutil.lib
+    ${CMAKE_SOURCE_DIR}/deps/lib/swscale.lib
+)
+
 # Link against chiaki-lib
-target_link_libraries(chiaki_py PRIVATE chiaki-pybind-lib chiaki-lib fmt::fmt)
+target_link_libraries(chiaki_py PRIVATE chiaki-pybind-lib chiaki-lib fmt::fmt ${FFMPEG_LIBRARIES})
+target_include_directories(chiaki_py PRIVATE ${FFMPEG_INCLUDE_DIRS})
+# target_link_directories(chiaki_py PRIVATE ${FFMPEG_LIBRARY_DIRS})
 
 if(WIN32)
     target_link_libraries(chiaki-pybind-lib ws2_32)

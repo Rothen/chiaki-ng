@@ -21,8 +21,8 @@
 extern "C"
 {
 #include <libavutil/frame.h>
+#include <libavutil/pixfmt.h>
 #include <libavutil/imgutils.h>
-#include <libavcodec/avcodec.h>
 #include <libavutil/hwcontext.h>
 #include <libswscale/swscale.h>
 }
@@ -113,7 +113,7 @@ ChiakiErrorCode chiaki_pybind_wakeup_wrapper(PyChiakiLog &log, const std::string
 }*/
 
 // Function to return a NumPy array
-py::object get_frame(StreamSession &session, bool disable_zero_copy)
+py::object get_frame(StreamSession &session, bool disable_zero_copy, py::array_t<uint8_t> target)
 {
     // Retrieve the FFmpeg decoder
     ChiakiFfmpegDecoder *decoder = session.GetFfmpegDecoder();
@@ -137,8 +137,16 @@ py::object get_frame(StreamSession &session, bool disable_zero_copy)
         ~AVFrameGuard() { av_frame_unref(frame); }
     } frame_guard{frame};
 
-    // Handle Vulkan format
-    if (frame->format == AV_PIX_FMT_VULKAN)
+    // Handle hardware decoding cases
+    static const std::set<int> zero_copy_formats = {AV_PIX_FMT_VULKAN,
+                                                    AV_PIX_FMT_D3D11
+#ifdef __linux__
+                                                    ,
+                                                    AV_PIX_FMT_VAAPI
+#endif
+    };
+
+    if ((zero_copy_formats.find(frame->format) != zero_copy_formats.end() || disable_zero_copy))
     {
         AVFrame *sw_frame = av_frame_alloc();
         if (!sw_frame)
@@ -146,32 +154,32 @@ py::object get_frame(StreamSession &session, bool disable_zero_copy)
             return py::str("Failed to allocate software frame");
         }
 
-        // Transfer Vulkan frame to CPU memory
         if (av_hwframe_transfer_data(sw_frame, frame, 0) < 0)
         {
             av_frame_free(&sw_frame);
-            return py::str("Failed to transfer Vulkan frame to CPU");
+            return py::str("Failed to transfer frame from hardware (D3D11)");
         }
 
         av_frame_copy_props(sw_frame, frame);
         av_frame_unref(frame);
         frame = sw_frame;
-        frame_guard.frame = frame; // Ensure proper cleanup
+        frame_guard.frame = frame; // Ensure cleanup
     }
 
-    if (frame->format == AV_PIX_FMT_NV12)
-    {
-        SwsContext *sws_ctx = sws_getContext(
-            frame->width, frame->height, AV_PIX_FMT_NV12,  // Source format
-            frame->width, frame->height, AV_PIX_FMT_RGB24, // Target format
+    if (frame->format == AV_PIX_FMT_NV12) {
+        // Step 1: Initialize SwsContext
+        struct SwsContext *sws_ctx = sws_getContext(
+            frame->width, frame->height, (AVPixelFormat)frame->format,
+            frame->width, frame->height, AV_PIX_FMT_RGB24,
             SWS_BILINEAR, nullptr, nullptr, nullptr);
 
         if (!sws_ctx)
         {
+            av_frame_free(&frame);
             return py::str("Failed to create SwsContext");
         }
 
-        // Allocate the RGB frame
+        // Step 2: Allocate Target Frame
         AVFrame *rgb_frame = av_frame_alloc();
         if (!rgb_frame)
         {
@@ -182,31 +190,36 @@ py::object get_frame(StreamSession &session, bool disable_zero_copy)
         rgb_frame->format = AV_PIX_FMT_RGB24;
         rgb_frame->width = frame->width;
         rgb_frame->height = frame->height;
-        if (av_frame_get_buffer(rgb_frame, 1) < 0)
+
+        if (av_image_alloc(rgb_frame->data, rgb_frame->linesize, rgb_frame->width,
+                        rgb_frame->height, AV_PIX_FMT_RGB24, 1) < 0)
         {
             av_frame_free(&rgb_frame);
             sws_freeContext(sws_ctx);
-            return py::str("Failed to allocate buffer for RGB frame");
+            return py::str("Failed to allocate RGB image buffer");
         }
 
-        // Convert NV12 to RGB24
-        sws_scale(sws_ctx, frame->data, frame->linesize, 0, frame->height, rgb_frame->data, rgb_frame->linesize);
+        // Step 3: Perform the Conversion
+        sws_scale(
+            sws_ctx,
+            frame->data, frame->linesize, 0, frame->height,
+            rgb_frame->data, rgb_frame->linesize);
 
+        // Clean up the old frame and replace it with the new one
+        av_frame_free(&frame);
         sws_freeContext(sws_ctx);
-        av_frame_unref(frame);
         frame = rgb_frame;
-        frame_guard.frame = frame; // Ensure cleanup
     }
 
-    // Convert to RGB24 if necessary
-    if (frame->format != AV_PIX_FMT_RGB24)
+    // Ensure the frame is in a readable format
+    if (frame->format != AV_PIX_FMT_RGB24 && frame->format != AV_PIX_FMT_GRAY8 && frame->format != AV_PIX_FMT_YUV420P) // AV_PIX_FMT_D3D11
     {
-        return py::str("Unsupported format after Vulkan transfer");
+        return py::str("Unsupported pixel format for NumPy conversion");
     }
 
     int height = frame->height;
     int width = frame->width;
-    int channels = 3;
+    int channels = (frame->format == AV_PIX_FMT_RGB24 || frame->format == AV_PIX_FMT_YUV420P) ? 3 : 1;
     int data_size = av_image_get_buffer_size((AVPixelFormat)frame->format, width, height, 1);
 
     if (data_size <= 0)
@@ -214,16 +227,15 @@ py::object get_frame(StreamSession &session, bool disable_zero_copy)
         return py::str("Failed to get image buffer size");
     }
 
-    // Copy frame data into a buffer
+    // Copy data into a buffer
     std::vector<uint8_t> buffer(data_size);
-    av_image_copy_to_buffer(buffer.data(), data_size, frame->data, frame->linesize, (AVPixelFormat)frame->format, width, height, 1);
+    
+    // Request buffer info from the NumPy array
+    py::buffer_info array_buf = target.request();
 
-    // Return as NumPy array
-    return py::array_t<uint8_t>(
-        {height, width, channels},       // Shape
-        {width * channels, channels, 1}, // Strides
-        buffer.data()                    // Data
-    );
+    av_image_copy_to_buffer(static_cast<uint8_t *>(array_buf.ptr), data_size, frame->data, frame->linesize, (AVPixelFormat)frame->format, width, height, 1);
+
+    return py::str("Success");
 }
 
 PYBIND11_MODULE(chiaki_py, m)
@@ -344,6 +356,7 @@ PYBIND11_MODULE(chiaki_py, m)
     m.def("get_frame", &get_frame,
           py::arg("session"),
           py::arg("disable_zero_copy"),
+          py::arg("target"),
           "Get the next frame from the session.");
 
     py::class_<ChiakiConnectVideoProfile>(m, "ChiakiConnectVideoProfile")

@@ -1,9 +1,10 @@
 from typing import Any
 import threading
-import time
 import signal
 import sys
 from chiaki_py import ChiakiLog, LogLevel, Target, Settings, StreamSessionConnectInfo, StreamSession, get_frame
+import numpy as np
+import cv2
 
 exit_event = threading.Event()
 
@@ -44,8 +45,10 @@ connect_info: StreamSessionConnectInfo = StreamSessionConnectInfo(
     stretch=stretch
 )
 
+img = np.zeros((1080, 1920, 3), np.uint8)
+
 stream_session: StreamSession = StreamSession(connect_info)
-stream_session.ffmpeg_frame_available = lambda: print(get_frame(stream_session, False))
+stream_session.ffmpeg_frame_available = lambda: get_frame(stream_session, False, img)
 stream_session.session_quit = lambda a, b: print('session_quit')
 stream_session.login_pin_requested = lambda a: print('login_pin_requested')
 stream_session.data_holepunch_progress = lambda a: print('data_holepunch_progress')
@@ -74,7 +77,12 @@ if __name__ == "__main__":
     print("Started")
 
     while not exit_event.is_set():
-        time.sleep(1)
+        cv2.imshow('frame', img)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
+    
+    stream_session.stop()
+    cv2.destroyAllWindows()
 
     print("Session closed. Exiting...")
 
